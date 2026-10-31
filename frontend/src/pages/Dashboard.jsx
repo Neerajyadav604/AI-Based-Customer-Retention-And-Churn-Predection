@@ -1,38 +1,28 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Bar,
-  BarChart,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { getStats } from '../api'
+import Card from '../components/Card'
+import DataTable from '../components/DataTable'
+import ErrorMessage from '../components/ErrorMessage'
 import MetricCard from '../components/MetricCard'
 import PageHeader from '../components/PageHeader'
+import RiskBadge from '../components/RiskBadge'
+import Spinner from '../components/Spinner'
 
-const cards = [
-  ['total_customers', 'Total customers', 'bg-blue-50 text-blue-800'],
-  ['high', 'High risk', 'bg-red-50 text-red-800'],
-  ['medium', 'Medium risk', 'bg-yellow-50 text-yellow-800'],
-  ['low', 'Low risk', 'bg-green-50 text-green-800'],
-]
+const riskColours = { High: '#dc2626', Medium: '#d97706', Low: '#16a34a' }
 
-const colours = {
-  High: '#dc2626',
-  Medium: '#ca8a04',
-  Low: '#16a34a',
+// Format the upload date in the user's local time.
+function formatUploadDate(value) {
+  if (!value) return ''
+  return `Last upload: ${new Date(value).toLocaleString()}`
 }
 
-// Load and display the latest customer risk summary.
+// Load and display the latest upload summary.
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadStats() {
@@ -48,73 +38,86 @@ export default function Dashboard() {
     loadStats()
   }, [])
 
-  if (loading) {
-    return <p className="text-slate-600">Loading dashboard...</p>
+  if (loading) return <Spinner label="Loading dashboard..." />
+  if (error) return <ErrorMessage message={error} />
+
+  const hasData = Number(stats?.total_customers) > 0
+  const description = ['Summary of your latest upload', formatUploadDate(stats?.last_upload_at)]
+    .filter(Boolean)
+    .join(' · ')
+
+  if (!hasData) {
+    return (
+      <section>
+        <PageHeader title="Dashboard" description={description} />
+        <Card className="text-center">
+          <h2 className="text-xl font-semibold text-slate-900">No data yet</h2>
+          <p className="mt-2 text-sm text-slate-500">Upload a CSV to see customer risk results.</p>
+          <Link to="/upload" className="mt-5 inline-flex rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2">
+            Upload your first CSV
+          </Link>
+        </Card>
+      </section>
+    )
   }
 
-  if (error) {
-    return <p className="rounded bg-red-50 p-4 text-red-700">{error}</p>
-  }
+  const riskData = [
+    { name: 'High', value: stats.high },
+    { name: 'Medium', value: stats.medium },
+    { name: 'Low', value: stats.low },
+  ]
 
-  const hasData = stats && Number(stats.total_customers) > 0
-  const riskData = hasData
-    ? [
-      { name: 'High', value: stats.high },
-      { name: 'Medium', value: stats.medium },
-      { name: 'Low', value: stats.low },
-    ]
-    : []
+  const columns = [
+    { key: 'customer_id', label: 'Customer' },
+    { key: 'recency_days', label: 'Recency', numeric: true },
+    { key: 'frequency', label: 'Orders', numeric: true },
+    { key: 'monetary', label: 'Spend', numeric: true, render: (row) => row.monetary.toFixed(2) },
+    { key: 'churn_probability', label: 'Probability', numeric: true, render: (row) => `${(row.churn_probability * 100).toFixed(1)}%` },
+    { key: 'risk_level', label: 'Risk', render: (row) => <RiskBadge riskLevel={row.risk_level} /> },
+  ]
 
   return (
     <section>
-      <PageHeader title="Dashboard" description="A summary of the latest customer risk results." />
-      {!hasData ? (
-        <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-          <h2 className="text-xl font-semibold">No customer data yet</h2>
-          <p className="mt-2 text-slate-600">Upload a customer CSV to see your risk summary.</p>
-          <Link to="/upload" className="mt-5 inline-block rounded bg-blue-700 px-4 py-2 font-medium text-white">
-            Upload customer data
-          </Link>
-        </div>
-      ) : (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {cards.map(([name, label]) => (
-              <MetricCard key={name} label={label} value={stats[name] ?? 0} subtitle="Latest upload" />
+      <PageHeader title="Dashboard" description={description} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Total customers" value={stats.total_customers} subtitle="Latest upload" />
+        <MetricCard label="High risk" value={stats.high} subtitle="Latest upload" />
+        <MetricCard label="Medium risk" value={stats.medium} subtitle="Latest upload" />
+        <MetricCard label="Low risk" value={stats.low} subtitle="Latest upload" />
+      </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <h2 className="text-lg font-semibold text-slate-900">Risk distribution</h2>
+          <div className="mt-4 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={riskData} dataKey="value" nameKey="name" innerRadius={62} outerRadius={92} paddingAngle={3}>
+                  {riskData.map((item) => <Cell key={item.name} fill={riskColours[item.name]} />)}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-slate-600">
+            {riskData.map((item) => (
+              <span key={item.name} className="inline-flex items-center gap-1.5">
+                <span className="size-2 rounded-full" style={{ backgroundColor: riskColours[item.name] }} />
+                {item.name}: {item.value}
+              </span>
             ))}
           </div>
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <div className="rounded-lg bg-white p-4 shadow-sm">
-              <h2 className="mb-4 text-xl font-semibold">Risk split</h2>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={riskData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={95} label>
-                      {riskData.map((entry) => <Cell key={entry.name} fill={colours[entry.name]} />)}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            <div className="rounded-lg bg-white p-4 shadow-sm">
-              <h2 className="mb-4 text-xl font-semibold">Customers by risk</h2>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={riskData}>
-                    <XAxis dataKey="name" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip />
-                    <Bar dataKey="value" name="Customers">
-                      {riskData.map((entry) => <Cell key={entry.name} fill={colours[entry.name]} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+          <p className="text-center text-sm text-slate-500">Average churn probability: <span className="font-mono">{(stats.avg_probability * 100).toFixed(1)}%</span></p>
+        </Card>
+        <Card>
+          <div className="flex items-start justify-between gap-4">
+            <h2 className="text-lg font-semibold text-slate-900">Needs attention</h2>
+            <Link to="/upload" className="text-sm font-medium text-indigo-600 hover:text-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-600">Upload new data</Link>
           </div>
-        </>
-      )}
+          <div className="mt-4 [&_table]:min-w-0 [&_th]:px-2 [&_td]:px-2">
+            <DataTable columns={columns} rows={stats.top_customers || []} emptyMessage="No customers need attention." />
+          </div>
+        </Card>
+      </div>
     </section>
   )
 }

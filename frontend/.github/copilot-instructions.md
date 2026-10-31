@@ -9,7 +9,7 @@ Folders: src/api/index.js (ALL fetch calls live here), src/components/, src/page
 Backend contract (planned; if an endpoint is not built yet, return sample data from the same function in src/api/index.js and mark it // TODO: replace with real API):
 - POST /predict  body {recency_days, frequency, monetary, tenure_days, total_items} -> {churn_probability (0-1), risk_level "Low"|"Medium"|"High", likely_to_churn}  (exists)
 - POST /predict/batch  multipart field "file", CSV columns customer_id, order_id, order_date, quantity, unit_price -> {summary:{total,high,medium,low}, customers:[{customer_id, recency_days, frequency, monetary, churn_probability, risk_level}]}
-- GET /stats -> {total_customers, high, medium, low, avg_probability, last_upload_at}  (the user's latest upload)
+- GET /stats -> top_customers: [{customer_id, recency_days, frequency, monetary, churn_probability, risk_level}].  (the user's latest upload)
 - GET /model/insights -> {metrics:{accuracy,precision,recall,f1,roc_auc,threshold}, feature_importance:[{feature, value}]}
 - POST /auth/signup {name,email,password}; POST /auth/login {email,password} -> {access_token, user:{name,email}}; GET /auth/me; PUT /auth/profile {name}; PUT /auth/password {current_password,new_password}. Protected calls send header Authorization: Bearer <token>.
 - GET /history -> [{id, created_at, source:"single"|"upload", churn_probability, risk_level}]
