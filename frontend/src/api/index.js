@@ -14,13 +14,23 @@ export async function request(path, options = {}) {
   })
 
   if (!response.ok) {
-    let message = `Request failed with status ${response.status}`
+    let message = 'Request failed'
 
     try {
       const errorData = await response.json()
-      message = errorData.detail || errorData.message || message
+      if (Array.isArray(errorData.detail)) {
+        message = errorData.detail[0]?.msg || 'Please check the form'
+      } else {
+        message = errorData.detail || errorData.message || message
+      }
     } catch {
       message = response.statusText || message
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
     }
 
     throw new Error(message)

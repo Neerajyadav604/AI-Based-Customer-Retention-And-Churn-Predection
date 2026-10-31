@@ -53,9 +53,9 @@ function RouteMap() {
         <Route path="/dashboard" element={<PrivatePage><Dashboard /></PrivatePage>} />
         <Route path="/predict" element={<PrivatePage><Predict /></PrivatePage>} />
         <Route path="/upload" element={<PrivatePage><Upload /></PrivatePage>} />
-        <Route path="/insights" element={<ModelInsights />} />
+        <Route path="/insights" element={<PrivatePage><ModelInsights /></PrivatePage>} />
         <Route path="/history" element={<PrivatePage><History /></PrivatePage>} />
-        <Route path="/recommendations" element={<Recommendations />} />
+        <Route path="/recommendations" element={<PrivatePage><Recommendations /></PrivatePage>} />
         <Route path="/profile" element={<PrivatePage><Profile /></PrivatePage>} />
       </Route>
     </Routes>

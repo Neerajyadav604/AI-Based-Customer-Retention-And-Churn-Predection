@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Spinner from '../components/Spinner'
 
 // Validate a login email before sending it.
 function isValidEmail(email) {
@@ -26,8 +27,8 @@ export default function Login() {
       setError('Please enter a valid email address.')
       return
     }
-    if (form.password.length < 8) {
-      setError('Password must be at least 8 characters.')
+    if (form.password.length < 8 || form.password.length > 64) {
+      setError('Password must be between 8 and 64 characters.')
       return
     }
 
@@ -56,7 +57,7 @@ export default function Login() {
         </label>
         {error && <p className="rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         <button type="submit" disabled={loading} className="rounded bg-blue-700 px-4 py-2 font-medium text-white disabled:opacity-50">
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? <Spinner label="Logging in..." /> : 'Login'}
         </button>
         <button type="button" disabled className="rounded border border-slate-300 px-4 py-2 text-slate-500">
           Continue with Google (TODO)

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Spinner from '../components/Spinner'
 
 // Validate a signup email before sending it.
 function isValidEmail(email) {
@@ -21,16 +22,20 @@ export default function Signup() {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    if (!form.name.trim()) {
-      setError('Please enter your name.')
+    if (form.name.trim().length < 2) {
+      setError('Name must be at least 2 characters.')
+      return
+    }
+    if (form.name.trim().length > 60) {
+      setError('Name must be 60 characters or fewer.')
       return
     }
     if (!isValidEmail(form.email)) {
       setError('Please enter a valid email address.')
       return
     }
-    if (form.password.length < 8) {
-      setError('Password must be at least 8 characters.')
+    if (form.password.length < 8 || form.password.length > 64) {
+      setError('Password must be between 8 and 64 characters.')
       return
     }
     if (form.password !== form.confirmPassword) {
@@ -68,7 +73,7 @@ export default function Signup() {
         </label>
         {error && <p className="rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         <button type="submit" disabled={loading} className="rounded bg-blue-700 px-4 py-2 font-medium text-white disabled:opacity-50">
-          {loading ? 'Creating account...' : 'Create account'}
+          {loading ? <Spinner label="Creating account..." /> : 'Create account'}
         </button>
         <button type="button" disabled className="rounded border border-slate-300 px-4 py-2 text-slate-500">
           Continue with Google (TODO)

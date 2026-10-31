@@ -6,7 +6,7 @@ from schemas.customer import CustomerInput, PredictionOutput, BatchOutput
 from ml.predictor import predict_churn, predict_batch, risk_level
 from ml.features import build_customer_features
 from ml.insights import get_insights
-from db import init_db, save_upload, get_latest_stats, get_history, save_history
+from db import init_db, save_upload, save_orders, get_latest_stats, get_history, save_history
 from auth import router as auth_router, current_user
 
 MAX_FILE_MB = 10
@@ -35,7 +35,7 @@ def predict(customer: CustomerInput, user=Depends(current_user)):
         text = f"Single customer: {pct}% churn probability ({result['risk_level']} risk)"
         save_history(user["email"], "single", text)
     except Exception as e:
-        print("Could not save history:", e)
+        print("Could not save history:", type(e).__name__)
     return result
 
 
@@ -85,9 +85,10 @@ async def predict_batch_csv(file: UploadFile = File(...), user=Depends(current_u
         "low": int(counts.get("Low", 0)),
     }
     try:
-        save_upload(user["email"], summary, customers)
+        upload_id = save_upload(user["email"], summary, customers)
+        save_orders(upload_id, user["email"], orders)
     except Exception as e:
-        print("Could not save upload:", e)
+        print("Could not save upload:", type(e).__name__)
     return {"summary": summary, "customers": customers}
 
 

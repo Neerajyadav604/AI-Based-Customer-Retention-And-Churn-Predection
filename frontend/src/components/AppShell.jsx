@@ -39,7 +39,7 @@ export default function AppShell({ children }) {
             {user ? (
               <>
                 <span className="text-slate-500">{user.name}</span>
-                <button type="button" onClick={logout} className="font-medium text-slate-500 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-600">Logout</button>
+                <button type="button" onClick={() => { logout(); window.location.href = '/login' }} className="font-medium text-slate-500 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-600">Logout</button>
               </>
             ) : (
               <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-600">Login</Link>

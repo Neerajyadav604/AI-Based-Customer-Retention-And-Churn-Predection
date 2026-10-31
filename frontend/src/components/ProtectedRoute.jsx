@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Spinner from './Spinner'
 
 // Protect a page and remember where the user wanted to go.
 export default function ProtectedRoute({ children }) {
@@ -7,7 +8,7 @@ export default function ProtectedRoute({ children }) {
   const location = useLocation()
 
   if (loading) {
-    return <p className="text-slate-600">Checking your login...</p>
+    return <Spinner label="Checking your login..." />
   }
 
   if (!user) {

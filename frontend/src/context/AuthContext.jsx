@@ -6,10 +6,7 @@ const AuthContext = createContext(null)
 // Keep authentication data available to all pages.
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('access_token'))
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user')
-    return savedUser ? JSON.parse(savedUser) : null
-  })
+  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -24,7 +21,10 @@ export function AuthProvider({ children }) {
         setUser(currentUser)
         localStorage.setItem('user', JSON.stringify(currentUser))
       } catch {
-        logout()
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('user')
+        setToken(null)
+        setUser(null)
       } finally {
         setLoading(false)
       }
