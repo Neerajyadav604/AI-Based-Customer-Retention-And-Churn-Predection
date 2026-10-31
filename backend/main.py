@@ -27,8 +27,16 @@ def health():
     return {"status": "ok"}
 
 @app.post("/predict", response_model=PredictionOutput)
-def predict(customer: CustomerInput):
-    return predict_churn(customer.model_dump())
+def predict(customer: CustomerInput, user=Depends(current_user)):
+    result = predict_churn(customer.model_dump())
+    # Add a line to this user's history. If saving fails, the prediction is still returned.
+    try:
+        pct = round(result["churn_probability"] * 100, 1)
+        text = f"Single customer: {pct}% churn probability ({result['risk_level']} risk)"
+        save_history(user["email"], "single", text)
+    except Exception as e:
+        print("Could not save history:", e)
+    return result
 
 
 # Upload a CSV of orders and get a churn prediction for every customer
