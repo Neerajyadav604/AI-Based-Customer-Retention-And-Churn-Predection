@@ -9,7 +9,7 @@ import Contact from './pages/Contact'
 import Dashboard from './pages/Dashboard'
 import History from './pages/History'
 import Home from './pages/Home'
-import Insights from './pages/Insights'
+import ModelInsights from './pages/ModelInsights'
 import Login from './pages/Login'
 import Predict from './pages/Predict'
 import Profile from './pages/Profile'
@@ -53,7 +53,7 @@ function RouteMap() {
         <Route path="/dashboard" element={<PrivatePage><Dashboard /></PrivatePage>} />
         <Route path="/predict" element={<PrivatePage><Predict /></PrivatePage>} />
         <Route path="/upload" element={<PrivatePage><Upload /></PrivatePage>} />
-        <Route path="/insights" element={<Insights />} />
+        <Route path="/insights" element={<ModelInsights />} />
         <Route path="/history" element={<PrivatePage><History /></PrivatePage>} />
         <Route path="/recommendations" element={<Recommendations />} />
         <Route path="/profile" element={<PrivatePage><Profile /></PrivatePage>} />
