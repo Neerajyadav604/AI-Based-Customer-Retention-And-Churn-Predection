@@ -27,3 +27,6 @@ def predict_churn(data):
         "risk_level": risk_level(p),
         "likely_to_churn": p >= threshold,
     }
+# Predict churn probabilities for many customers at once
+def predict_batch(features_df):
+    return pipeline.predict_proba(features_df[feature_names])[:, 1]    

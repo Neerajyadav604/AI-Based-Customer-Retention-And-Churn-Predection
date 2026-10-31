@@ -13,3 +13,25 @@ class PredictionOutput(BaseModel):
     churn_probability: float
     risk_level: str
     likely_to_churn: bool
+
+
+# One customer in the batch result
+class BatchCustomer(BaseModel):
+    customer_id: str
+    recency_days: int
+    frequency: int
+    monetary: float
+    churn_probability: float
+    risk_level: str
+
+# Counts per risk level
+class BatchSummary(BaseModel):
+    total: int
+    high: int
+    medium: int
+    low: int
+
+# The full batch response
+class BatchOutput(BaseModel):
+    summary: BatchSummary
+    customers: list[BatchCustomer]    
