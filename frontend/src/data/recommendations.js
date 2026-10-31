@@ -1,20 +1,30 @@
-// Suggest simple retention actions for each risk level.
+// Keep the action arrays for the Predict page.
 const recommendations = {
   High: [
-    'Send a personal WhatsApp message with a small discount.',
-    'Ask what went wrong and offer help with the next order.',
-    'Share one useful product suggestion based on past purchases.',
+    'Send a personal call or message.',
+    'Offer a small discount on the next order.',
+    'Ask what would make the next order easier.',
+    'Send a reminder after the usual ordering gap.',
   ],
   Medium: [
-    'Send a friendly reminder about your store and popular products.',
-    'Offer free delivery or a small reward on the next order.',
-    'Tell the customer about a new product they may like.',
+    'Send a friendly reminder about your store.',
+    'Offer a small discount on the next order.',
+    'Share a useful product suggestion.',
+    'Send a thank-you note after the next purchase.',
   ],
   Low: [
-    'Send a thank-you note after the customer’s next purchase.',
-    'Invite the customer to recommend your store to a friend.',
-    'Offer early access to a new product or seasonal item.',
+    'Send a thank-you note after the next purchase.',
+    'Ask the customer to recommend your store.',
+    'Share news about a new product or seasonal item.',
+    'Send a reminder after the usual ordering gap.',
   ],
+}
+
+// Add the meaning and title used by the recommendations page.
+export const recommendationInfo = {
+  High: { title: 'Reconnect soon', meaning: '60% or above', actions: recommendations.High },
+  Medium: { title: 'Keep engaged', meaning: '40% to under 60%', actions: recommendations.Medium },
+  Low: { title: 'Build loyalty', meaning: 'Below 40%', actions: recommendations.Low },
 }
 
 export default recommendations

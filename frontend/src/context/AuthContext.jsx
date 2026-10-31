@@ -58,8 +58,15 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  // Update the saved user after a profile change.
+  function updateUser(updatedUser) {
+    const nextUser = { ...user, ...updatedUser }
+    localStorage.setItem('user', JSON.stringify(nextUser))
+    setUser(nextUser)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, token, login, signup, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, signup, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   )
