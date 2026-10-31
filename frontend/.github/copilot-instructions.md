@@ -12,7 +12,7 @@ Backend contract (planned; if an endpoint is not built yet, return sample data f
 - GET /stats -> top_customers: [{customer_id, recency_days, frequency, monetary, churn_probability, risk_level}].  (the user's latest upload)
 - GET /model/insights -> {metrics:{accuracy,precision,recall,f1,roc_auc,threshold}, feature_importance:[{feature, value}]}
 - POST /auth/signup {name,email,password}; POST /auth/login {email,password} -> {access_token, user:{name,email}}; GET /auth/me; PUT /auth/profile {name}; PUT /auth/password {current_password,new_password}. Protected calls send header Authorization: Bearer <token>.
-- GET /history -> [{id, created_at, source:"single"|"upload", churn_probability, risk_level}]
+- GET /history -> [{id, created_at, source: "single"|"upload", summary}]
 - POST /contact {name,email,message}
 
 DESIGN: Follow frontend/DESIGN.md. The images in frontend/design/ are layout references only. They contain invented sample data (Telco, XGBoost, SHAP, names, emails, contracts, MRR, AUC 0.884). NEVER copy their text, numbers, model names or features. Show only data from our API, or clearly labelled sample data during development. Our customers have only: customer_id, recency_days, frequency, monetary, tenure_days, total_items, avg_order_value, churn_probability, risk_level. There are no names, emails, contracts or monthly charges. Our model is Logistic Regression: no SHAP, no model selection, no retrain or deploy buttons. Use Tailwind default palette classes that match DESIGN.md (indigo-600, slate-50, slate-200, slate-900, slate-500, red/amber/green for risk).

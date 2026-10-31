@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { getHistory } from '../api'
-import RiskBadge from '../components/RiskBadge'
 import DataTable from '../components/DataTable'
 import PageHeader from '../components/PageHeader'
 
@@ -53,9 +52,8 @@ export default function History() {
           <DataTable
             columns={[
               { key: 'created_at', label: 'Date', render: (item) => formatDate(item.created_at) },
-              { key: 'source', label: 'Source', render: (item) => <span className="capitalize">{item.source}</span> },
-              { key: 'churn_probability', label: 'Probability', numeric: true, render: (item) => `${(Number(item.churn_probability) * 100).toFixed(1)}%` },
-              { key: 'risk_level', label: 'Risk', render: (item) => <RiskBadge riskLevel={item.risk_level} /> },
+              { key: 'source', label: 'Source', render: (item) => item.source === 'upload' ? 'Batch upload' : 'Single prediction' },
+              { key: 'summary', label: 'Summary' },
             ]}
             rows={visibleHistory}
           />

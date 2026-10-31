@@ -9,6 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pymongo.errors import DuplicateKeyError
 from mongo import users
 from schemas.auth import LoginInput, SignupInput
+from schemas.auth import LoginInput, SignupInput, ProfileInput, PasswordInput
 
 load_dotenv()
 JWT_SECRET = os.getenv("JWT_SECRET")
@@ -59,3 +60,20 @@ def login(data: LoginInput):
 @router.get("/me")
 def me(user=Depends(current_user)):
     return public_user(user)
+
+
+@router.put("/profile")
+def update_profile(data: ProfileInput, user=Depends(current_user)):
+    # Only the name can be changed; the email is the login identity
+    users.update_one({"email": user["email"]}, {"$set": {"name": data.name.strip()}})
+    user["name"] = data.name.strip()
+    return public_user(user)
+
+@router.put("/password")
+def change_password(data: PasswordInput, user=Depends(current_user)):
+    # The user must prove they know the current password first
+    if not bcrypt.checkpw(data.current_password.encode(), user["password_hash"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    new_hash = bcrypt.hashpw(data.new_password.encode(), bcrypt.gensalt())
+    users.update_one({"email": user["email"]}, {"$set": {"password_hash": new_hash}})
+    return {"message": "Password updated"}
