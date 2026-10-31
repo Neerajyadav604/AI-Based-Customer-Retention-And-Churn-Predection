@@ -11,10 +11,12 @@ from schemas.customer import CustomerInput, PredictionOutput, BatchOutput
 from ml.predictor import predict_churn, predict_batch, risk_level
 from ml.features import build_customer_features
 from ml.insights import get_insights
+from db import init_db, save_upload, get_latest_stats
 
 MAX_FILE_MB = 10
 
 app = FastAPI(title="Churn Prediction API")
+init_db()   # make sure the SQLite tables exist
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -190,8 +192,17 @@ async def predict_batch_csv(file: UploadFile = File(...)):
         "medium": int(counts.get("Medium", 0)),
         "low": int(counts.get("Low", 0)),
     }
+    try:
+        save_upload(summary, customers)
+    except Exception as e:
+        print("Could not save upload:", e)
     return {"summary": summary, "customers": customers}
+
 
 @app.get("/model/insights")
 def model_insights():
     return get_insights()
+
+@app.get("/stats")
+def stats():
+    return get_latest_stats()
