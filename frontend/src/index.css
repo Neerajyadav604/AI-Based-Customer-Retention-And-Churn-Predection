@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background: #f8fafc;
+    color: #0f172a;
+    font-family: var(--font-sans);
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    outline: none;
+  }
+}
