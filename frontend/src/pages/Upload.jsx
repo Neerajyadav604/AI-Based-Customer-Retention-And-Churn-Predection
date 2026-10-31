@@ -3,6 +3,7 @@ import { predictBatch } from '../api'
 import ResultsTable from '../components/ResultsTable'
 import SummaryCards from '../components/SummaryCards'
 import PageHeader from '../components/PageHeader'
+import ProbabilityHistogram from '../components/ProbabilityHistogram'
 
 const requiredColumns = ['customer_id', 'order_id', 'order_date', 'quantity', 'unit_price']
 const maxFileSize = 10 * 1024 * 1024
@@ -95,6 +96,7 @@ export default function Upload() {
         <>
           <h2 className="mb-3 mt-8 text-xl font-semibold">Upload summary</h2>
           <SummaryCards summary={summary} />
+          <ProbabilityHistogram customers={customers} />
           <ResultsTable customers={customers} />
         </>
       )}
