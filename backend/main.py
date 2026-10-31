@@ -12,6 +12,7 @@ from ml.predictor import predict_churn, predict_batch, risk_level
 from ml.features import build_customer_features
 from ml.insights import get_insights
 from db import init_db, save_upload, get_latest_stats
+from auth import router as auth_router
 
 MAX_FILE_MB = 10
 
@@ -23,6 +24,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_router)
 
 # Temporary development storage until a database is added.
 users = {}
