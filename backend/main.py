@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from schemas.customer import CustomerInput, PredictionOutput, BatchOutput
 from ml.predictor import predict_churn, predict_batch, risk_level
 from ml.features import build_customer_features
+from ml.insights import get_insights
 
 MAX_FILE_MB = 10
 
@@ -190,3 +191,7 @@ async def predict_batch_csv(file: UploadFile = File(...)):
         "low": int(counts.get("Low", 0)),
     }
     return {"summary": summary, "customers": customers}
+
+@app.get("/model/insights")
+def model_insights():
+    return get_insights()

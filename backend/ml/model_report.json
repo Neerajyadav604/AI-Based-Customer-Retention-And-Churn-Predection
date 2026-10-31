@@ -1,0 +1,49 @@
+{
+  "metrics": {
+    "accuracy": 0.642,
+    "precision": 0.564,
+    "recall": 0.748,
+    "f1": 0.643,
+    "roc_auc": 0.717,
+    "threshold": 0.4
+  },
+  "confusion_matrix": [
+    [
+      216,
+      168
+    ],
+    [
+      73,
+      217
+    ]
+  ],
+  "models": [
+    {
+      "model": "Logistic Regression",
+      "accuracy": 0.663,
+      "precision": 0.606,
+      "recall": 0.621,
+      "f1": 0.613,
+      "roc_auc": 0.717,
+      "cv_roc_auc": 0.743
+    },
+    {
+      "model": "Random Forest",
+      "accuracy": 0.638,
+      "precision": 0.577,
+      "recall": 0.597,
+      "f1": 0.586,
+      "roc_auc": 0.702,
+      "cv_roc_auc": 0.736
+    },
+    {
+      "model": "Gradient Boosting",
+      "accuracy": 0.638,
+      "precision": 0.577,
+      "recall": 0.597,
+      "f1": 0.586,
+      "roc_auc": 0.699,
+      "cv_roc_auc": 0.731
+    }
+  ]
+}
