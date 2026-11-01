@@ -1,6 +1,6 @@
 // Home.jsx - public landing page with no API calls.
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import LaunchWorkspaceButton from '../components/LaunchWorkspaceButton'
 import FeatureCards from '../components/home/FeatureCards'
 import HomeCta from '../components/home/HomeCta'
 import HowItWorks from '../components/home/HowItWorks'
@@ -58,12 +58,11 @@ export default function Home() {
             Upload your order list, get a churn risk for every customer, and follow clear actions to keep them.
           </p>
           <div className="mt-8 flex justify-center">
-            <Link
-              to="/workspace"
+            <LaunchWorkspaceButton
               className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
               Launch workspace
-            </Link>
+            </LaunchWorkspaceButton>
           </div>
         </section>
 

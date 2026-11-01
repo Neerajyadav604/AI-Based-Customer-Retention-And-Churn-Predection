@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import LaunchWorkspaceButton from '../components/LaunchWorkspaceButton'
 import { useAuth } from '../context/AuthContext'
 import { upgrade } from '../lib/upgrade'
 
@@ -240,9 +241,15 @@ export default function Pricing() {
           <p className="mx-auto mt-4 max-w-2xl text-sm text-indigo-100">
             Join hundreds of e-commerce stores and kirana stores identifying at-risk customers before they defect.
           </p>
-          <Link to={user ? '/workspace' : '/signup'} className="mt-8 inline-flex rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50">
-            Launch Workspace →
-          </Link>
+          {user ? (
+            <LaunchWorkspaceButton className="mt-8 inline-flex rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50">
+              Launch Workspace →
+            </LaunchWorkspaceButton>
+          ) : (
+            <Link to="/signup" className="mt-8 inline-flex rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50">
+              Launch Workspace →
+            </Link>
+          )}
           <p className="mt-4 text-xs text-indigo-200">No credit card required · Instant 3 free trials · Takes under 60 seconds</p>
         </div>
       </section>

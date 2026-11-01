@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { Lottie } from 'lottie-react'
 import { useAuth } from '../context/AuthContext'
 import AuthPageShell from '../components/AuthPageShell'
 import ErrorMessage from '../components/ErrorMessage'
 import Spinner from '../components/Spinner'
 import PasswordField from '../components/PasswordField'
-import Illustration from '../components/Illustration'
 import GoogleButton from '../components/GoogleButton'
+import loginAnimation from '../assets/study-discussion.json'
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -54,7 +55,7 @@ export default function Login() {
   }
 
   return (
-    <AuthPageShell title="Sign In" switchText="New user?" switchLabel="Create an account" switchTo="/signup" illustration={<Illustration />}>
+    <AuthPageShell title="Sign In" switchText="New user?" switchLabel="Create an account" switchTo="/signup" illustration={<Lottie src={loginAnimation} autoplay loop className="h-[460px] w-full max-w-lg" aria-label="Study discussion animation" />}>
       <div className="mb-6"><GoogleButton /></div>
       <p className="mb-6 text-center text-xs text-slate-400">Or continue with email</p>
       <form onSubmit={handleSubmit} className="grid gap-4">

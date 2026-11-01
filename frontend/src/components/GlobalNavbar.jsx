@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ProfileMenu from './ProfileMenu'
+import LaunchWorkspaceButton from './LaunchWorkspaceButton'
 
 const publicLinks = [
   ['Home', '/'],
@@ -39,13 +40,13 @@ export default function GlobalNavbar({ transparent = false }) {
         <div className={`${open ? 'flex' : 'hidden'} absolute right-4 top-full flex-col gap-2 border-b p-4 md:static md:flex md:flex-row md:items-center md:border-0 md:bg-transparent md:p-0 ${transparent ? 'border-white/10 bg-[#071426]' : 'border-slate-200 bg-white'}`}>
           {user ? (
             <>
-              <Link to="/workspace" onClick={closeMenu} className="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-600">Launch Workspace</Link>
+              <LaunchWorkspaceButton onClick={closeMenu} className="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-600">Launch Workspace</LaunchWorkspaceButton>
               <ProfileMenu />
             </>
           ) : (
             <>
               <Link to="/login" onClick={closeMenu} className={`text-sm focus-visible:ring-2 focus-visible:ring-blue-400 ${transparent ? 'text-slate-300 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}>Login</Link>
-              <Link to="/workspace" onClick={closeMenu} className="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-600">Launch Workspace</Link>
+              <LaunchWorkspaceButton onClick={closeMenu} className="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-600">Launch Workspace</LaunchWorkspaceButton>
             </>
           )}
         </div>

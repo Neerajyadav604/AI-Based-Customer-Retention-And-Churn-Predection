@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Lottie } from 'lottie-react'
 import { useAuth } from '../context/AuthContext'
 import AuthPageShell from '../components/AuthPageShell'
 import ErrorMessage from '../components/ErrorMessage'
-import Illustration from '../components/Illustration'
 import PasswordField from '../components/PasswordField'
 import Spinner from '../components/Spinner'
 import GoogleButton from '../components/GoogleButton'
+import signupAnimation from '../assets/isometric-data-analysis.json'
 
 const jobRoles = ['Business Owner', 'Shop Owner / Seller', 'Data Analyst', 'Customer Success Manager', 'Marketing Manager', 'Product Manager', 'Data Scientist', 'Business Analyst', 'Other']
 
@@ -53,7 +54,13 @@ export default function Signup() {
   }
 
   return (
-    <AuthPageShell title="Create Account" switchText="Already registered?" switchLabel="Sign in" switchTo="/login" illustration={<Illustration />}>
+    <AuthPageShell
+      title="Create Account"
+      switchText="Already registered?"
+      switchLabel="Sign in"
+      switchTo="/login"
+      illustration={<Lottie src={signupAnimation} autoplay loop className="h-[460px] w-full max-w-lg" aria-label="Data analysis animation" />}
+    >
       <div className="mb-5"><GoogleButton /></div>
       <p className="mb-5 text-center text-xs text-slate-400">Or continue with email</p>
       <form onSubmit={handleSubmit} className="grid gap-3">
