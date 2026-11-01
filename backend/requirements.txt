@@ -2,6 +2,9 @@ fastapi
 gunicorn
 uvicorn
 pandas
+numpy
+scikit-learn
+joblib
 python-dotenv
 bcrypt
 PyJWT
