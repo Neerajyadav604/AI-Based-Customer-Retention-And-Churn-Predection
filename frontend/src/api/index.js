@@ -1,6 +1,9 @@
 // Build one API URL and send the request.
 export async function request(path, options = {}) {
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  const baseUrl = import.meta.env.VITE_API_URL
+  if (!baseUrl) {
+    throw new Error('VITE_API_URL is not configured.')
+  }
   const token = localStorage.getItem('access_token')
   const { responseType, skipAuthRedirect, ...fetchOptions } = options
   const headers = new Headers(fetchOptions.headers || {})

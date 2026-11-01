@@ -47,8 +47,7 @@ export default function ProfileMenu({ compact = false }) {
             <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
             <p className="truncate text-xs text-slate-500">{user.email}</p>
           </div>
-          <Link to="/workspace" onClick={() => setOpen(false)} className="mt-1 block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" role="menuitem">Dashboard</Link>
-          <Link to="/workspace/profile" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" role="menuitem">Profile</Link>
+          <Link to="/workspace/profile" onClick={() => setOpen(false)} className="mt-1 block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" role="menuitem">Profile</Link>
           <button type="button" onClick={handleLogout} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50" role="menuitem">Logout</button>
         </div>
       )}

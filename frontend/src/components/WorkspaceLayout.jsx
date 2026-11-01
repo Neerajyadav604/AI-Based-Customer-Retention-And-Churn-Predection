@@ -13,7 +13,6 @@ const links = [
   ['Model Insights', '/workspace/insights', 'insights'],
   ['History', '/workspace/history', 'history'],
   ['Recommendations', '/workspace/recommendations', 'recommendations'],
-  ['Profile & Settings', '/workspace/profile', 'profile'],
 ]
 
 // Provide the protected workspace sidebar, top bar, and page outlet.

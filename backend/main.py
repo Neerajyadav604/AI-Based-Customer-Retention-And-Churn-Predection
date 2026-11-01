@@ -1,4 +1,7 @@
 import io
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException, Depends
@@ -22,13 +25,18 @@ from plans import check_access, use_trial
 from routes.payment import router as payment_router
 from routes.onboarding import router as onboarding_router
 
+load_dotenv(Path(__file__).parent / ".env")
+
 MAX_FILE_MB = 10
+frontend_url = os.getenv("FRONTEND_URL")
+if not frontend_url:
+    raise RuntimeError("FRONTEND_URL is not configured.")
 
 app = FastAPI(title="Churn Prediction API")
 init_db()   # make sure the SQLite tables exist
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[frontend_url],
     allow_methods=["*"],
     allow_headers=["*"],
 )
