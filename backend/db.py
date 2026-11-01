@@ -9,11 +9,16 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent / ".env")
 
+# SSL is only used when MYSQL_SSL_CA is set.
+CA = os.getenv("MYSQL_SSL_CA")
+CA_PATH = os.path.join(os.path.dirname(__file__), CA) if CA else None
+
 # Open a new MySQL connection.
 def connect():
     return pymysql.connect(host=os.getenv("MYSQL_HOST"), port=int(os.getenv("MYSQL_PORT", "3306")),
                            user=os.getenv("MYSQL_USER"), password=os.getenv("MYSQL_PASSWORD"),
                            database=os.getenv("MYSQL_DB"), charset="utf8mb4",
+                           ssl_ca=CA_PATH,
                            cursorclass=pymysql.cursors.DictCursor, autocommit=False)
 
 # Return a UTC datetime for MySQL DATETIME.
