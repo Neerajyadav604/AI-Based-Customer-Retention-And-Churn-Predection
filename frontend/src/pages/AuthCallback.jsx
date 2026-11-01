@@ -14,7 +14,6 @@ export default function AuthCallback() {
     handled.current = true
 
     async function finishGoogleLogin() {
-      const destination = sessionStorage.getItem('google_redirect') || '/workspace'
       sessionStorage.removeItem('google_redirect')
       try {
         if (!supabase) throw new Error('Google login is not configured.')
@@ -24,7 +23,7 @@ export default function AuthCallback() {
         }
         const user = await loginWithGoogle(data.session.access_token)
         await supabase.auth.signOut()
-        navigate(user.onboarding_completed === false ? '/onboarding' : destination, { replace: true })
+        navigate(user.onboarding_completed === false ? '/onboarding' : '/', { replace: true })
       } catch (error) {
         if (supabase) await supabase.auth.signOut()
         navigate('/login', { replace: true, state: { error: error.message || 'Google login failed.' } })

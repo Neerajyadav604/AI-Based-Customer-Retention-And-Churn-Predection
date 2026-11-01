@@ -23,7 +23,7 @@ export default function VerifyEmail() {
     setError('')
     try {
       const user = await verifyEmail(email, otp)
-      navigate(user.onboarding_completed === false ? '/onboarding' : '/workspace', { replace: true })
+      navigate(user.onboarding_completed === false ? '/onboarding' : '/', { replace: true })
     } catch (requestError) {
       setError(requestError.message)
     } finally {

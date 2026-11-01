@@ -1,9 +1,7 @@
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import { supabase } from '../supabase'
 
 export default function GoogleButton() {
-  const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -15,8 +13,6 @@ export default function GoogleButton() {
       setLoading(false)
       return
     }
-    const destination = location.state?.from?.pathname || '/workspace'
-    sessionStorage.setItem('google_redirect', destination)
     const { error: loginError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },

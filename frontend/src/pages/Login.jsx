@@ -38,10 +38,9 @@ export default function Login() {
     setError('')
     try {
       const loggedInUser = await login(form.email, form.password)
-      const nextPath = new URLSearchParams(location.search).get('next')
       const destination = loggedInUser.onboarding_completed === false
         ? '/onboarding'
-        : (nextPath && nextPath.startsWith('/') ? nextPath : null) || location.state?.from?.pathname || '/workspace'
+        : '/'
       navigate(destination, { replace: true })
     } catch (requestError) {
       if (requestError.code === 'EMAIL_NOT_VERIFIED') {
