@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pandas
+python-dotenv
+bcrypt
+PyJWT
+pymongo
+pymysql
+cloudinary
+python-multipart
+pydantic[email]
+razorpay
+openpyxl
+requests

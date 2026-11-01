@@ -15,5 +15,13 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace state={{ from: location }} />
   }
 
+  if (user.onboarding_completed === false && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />
+  }
+
+  if (user.onboarding_completed !== false && location.pathname === '/onboarding') {
+    return <Navigate to="/workspace" replace />
+  }
+
   return children
 }

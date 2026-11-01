@@ -1,0 +1,8 @@
+customer_id,order_id,order_date,quantity,unit_price
+demo-001,order-001,2026-09-10,2,35
+demo-001,order-002,2026-10-12,1,55
+demo-002,order-003,2026-08-20,1,120
+demo-002,order-004,2026-09-18,2,80
+demo-003,order-005,2026-10-05,3,25
+demo-004,order-006,2026-07-14,1,210
+demo-005,order-007,2026-10-20,2,45

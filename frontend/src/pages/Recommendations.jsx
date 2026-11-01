@@ -52,7 +52,7 @@ export default function Recommendations() {
       {stats?.total_customers === 0 && (
         <Card className="mt-6">
           <p className="text-slate-600">No customer data yet.</p>
-          <Link to="/upload" className="mt-3 inline-block font-medium text-indigo-600 hover:text-indigo-700">Upload your first CSV</Link>
+          <Link to="/workspace/upload" className="mt-3 inline-block font-medium text-indigo-600 hover:text-indigo-700">Upload your first CSV</Link>
         </Card>
       )}
     </section>

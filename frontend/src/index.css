@@ -13,11 +13,33 @@
     font-family: var(--font-sans);
   }
 
+  @keyframes profile-menu-in {
+    from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
   button,
   a,
   input,
   select,
   textarea {
     outline: none;
+  }
+
+  .auth-input {
+    border: 1px solid rgb(51 65 85);
+    border-radius: 0.5rem;
+    background: rgb(30 41 59 / 0.8);
+    padding: 0.75rem 1rem;
+    color: white;
+  }
+
+  .auth-input::placeholder {
+    color: rgb(100 116 139);
+  }
+
+  .auth-input:focus {
+    border-color: rgb(59 130 246);
+    outline: 1px solid rgb(59 130 246);
   }
 }

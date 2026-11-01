@@ -7,6 +7,7 @@ saved = joblib.load(Path(__file__).parent / "churn_model.joblib")
 pipeline = saved["pipeline"]
 feature_names = saved["features"]
 threshold = saved["threshold"]
+model_name = saved.get("model_name", "Logistic Regression")
 
 # Turn a probability into a risk label
 def risk_level(p):

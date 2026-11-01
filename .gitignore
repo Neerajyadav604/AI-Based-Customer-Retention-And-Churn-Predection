@@ -7,3 +7,4 @@ dist/
 .env
 backend/data/
 backend/app.db
+.env.example

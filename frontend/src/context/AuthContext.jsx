@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { getCurrentUser, loginUser, signupUser } from '../api'
+import { getCurrentUser, googleLogin, loginUser, signupUser, verifyOtp } from '../api'
 
 const AuthContext = createContext(null)
 
@@ -42,8 +42,21 @@ export function AuthProvider({ children }) {
     return data.user
   }
 
-  async function signup(name, email, password) {
-    const data = await signupUser(name, email, password)
+  async function signup(name, email, password, jobRole, termsAccepted) {
+    return signupUser(name, email, password, jobRole, termsAccepted)
+  }
+
+  async function verifyEmail(email, otp) {
+    const data = await verifyOtp(email, otp)
+    localStorage.setItem('access_token', data.access_token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+    setToken(data.access_token)
+    setUser(data.user)
+    return data.user
+  }
+
+  async function loginWithGoogle(accessToken) {
+    const data = await googleLogin(accessToken)
     localStorage.setItem('access_token', data.access_token)
     localStorage.setItem('user', JSON.stringify(data.user))
     setToken(data.access_token)
@@ -66,7 +79,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, signup, logout, updateUser, loading }}>
+    <AuthContext.Provider value={{ user, token, login, signup, verifyEmail, loginWithGoogle, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   )

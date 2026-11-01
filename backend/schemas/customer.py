@@ -21,6 +21,9 @@ class BatchCustomer(BaseModel):
     recency_days: int
     frequency: int
     monetary: float
+    tenure_days: float | None = None
+    total_items: float | None = None
+    avg_order_value: float | None = None
     churn_probability: float
     risk_level: str
 

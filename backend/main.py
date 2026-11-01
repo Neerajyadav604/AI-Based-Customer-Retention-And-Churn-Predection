@@ -3,11 +3,24 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException, Depends
 from schemas.customer import CustomerInput, PredictionOutput, BatchOutput
-from ml.predictor import predict_churn, predict_batch, risk_level
+from ml.predictor import predict_churn, predict_batch, risk_level, threshold, model_name
 from ml.features import build_customer_features
 from ml.insights import get_insights
-from db import init_db, save_upload, save_orders, get_latest_stats, get_history, save_history
+from db import (
+    get_history_run,
+    get_latest_predictions,
+    get_history,
+    get_latest_stats,
+    init_db,
+    save_history,
+    save_orders,
+    save_upload,
+)
 from auth import router as auth_router, current_user
+from photo import router as photo_router
+from plans import check_access, use_trial
+from routes.payment import router as payment_router
+from routes.onboarding import router as onboarding_router
 
 MAX_FILE_MB = 10
 
@@ -21,6 +34,9 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(photo_router)
+app.include_router(payment_router)
+app.include_router(onboarding_router)
 
 @app.get("/health")
 def health():
@@ -28,12 +44,24 @@ def health():
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(customer: CustomerInput, user=Depends(current_user)):
+    check_access(user, rows=1)   # 1 customer
     result = predict_churn(customer.model_dump())
+    use_trial(user)              # count this trial only after success
     # Add a line to this user's history. If saving fails, the prediction is still returned.
     try:
         pct = round(result["churn_probability"] * 100, 1)
         text = f"Single customer: {pct}% churn probability ({result['risk_level']} risk)"
-        save_history(user["email"], "single", text)
+        save_history(
+            user["email"], "single", text, threshold_used=threshold,
+            model_name=model_name,
+            prediction_data={
+                "customer_id": "",
+                **customer.model_dump(),
+                "avg_order_value": round(customer.monetary / customer.frequency, 2),
+                "churn_probability": result["churn_probability"],
+                "risk_level": result["risk_level"],
+            },
+        )
     except Exception as e:
         print("Could not save history:", type(e).__name__)
     return result
@@ -61,10 +89,12 @@ async def predict_batch_csv(file: UploadFile = File(...), user=Depends(current_u
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Predict and label each customer, highest risk first
+    # Check trial / paid limits using customer count, then predict
+    check_access(user, rows=len(features))
     features["churn_probability"] = predict_batch(features).round(3)
     features["risk_level"] = features["churn_probability"].apply(risk_level)
     features = features.sort_values("churn_probability", ascending=False)
+    use_trial(user)   # count this trial only after success
 
     # Build the response
     customers = []
@@ -74,6 +104,9 @@ async def predict_batch_csv(file: UploadFile = File(...), user=Depends(current_u
             "recency_days": int(row["recency_days"]),
             "frequency": int(row["frequency"]),
             "monetary": round(float(row["monetary"]), 2),
+            "tenure_days": float(row["tenure_days"]),
+            "total_items": float(row["total_items"]),
+            "avg_order_value": round(float(row["avg_order_value"]), 2),
             "churn_probability": float(row["churn_probability"]),
             "risk_level": row["risk_level"],
         })
@@ -85,7 +118,10 @@ async def predict_batch_csv(file: UploadFile = File(...), user=Depends(current_u
         "low": int(counts.get("Low", 0)),
     }
     try:
-        upload_id = save_upload(user["email"], summary, customers)
+        upload_id = save_upload(
+            user["email"], summary, customers, file_name=file.filename,
+            threshold_used=threshold, model_name=model_name,
+        )
         save_orders(upload_id, user["email"], orders)
     except Exception as e:
         print("Could not save upload:", type(e).__name__)
@@ -103,3 +139,26 @@ def stats(user=Depends(current_user)):
 @app.get("/history")
 def history(user=Depends(current_user)):
     return get_history(user["email"])
+
+
+@app.get("/predictions/latest")
+def latest_predictions(user=Depends(current_user)):
+    return get_latest_predictions(user["email"])
+
+
+@app.get("/history/{run_id}/download")
+def download_history(run_id: int, user=Depends(current_user)):
+    from exports import build_excel
+    from fastapi.responses import StreamingResponse
+
+    run = get_history_run(user["email"], run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Prediction run not found")
+    workbook = build_excel(run)
+    return StreamingResponse(
+        workbook,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="churnIQ_predictions_{run_id}.xlsx"',
+        },
+    )
