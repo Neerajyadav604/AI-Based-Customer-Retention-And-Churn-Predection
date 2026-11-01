@@ -27,7 +27,7 @@ export default function LaunchLoader({ onDone }) {
           100% { transform: translateY(-110%); }
         }
       `}</style>
-      <h1 key={idx} className="whitespace-nowrap text-center text-[8vw] font-bold uppercase leading-none tracking-[0.06em] text-blue-600">
+      <h1 key={idx} className="whitespace-nowrap px-6 text-center text-3xl font-bold uppercase leading-none tracking-[0.06em] text-blue-600 sm:text-4xl md:text-5xl">
         {WORDS[idx].split('').map((character, index) => (
           <span key={`${idx}-${index}`} className="inline-block overflow-hidden py-[0.08em] align-top">
             <span
