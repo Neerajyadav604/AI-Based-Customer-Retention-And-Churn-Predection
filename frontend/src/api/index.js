@@ -4,6 +4,7 @@ export async function request(path, options = {}) {
   if (!baseUrl) {
     throw new Error('VITE_API_URL is not configured.')
   }
+  console.info(`[API BASE URL] ${baseUrl}`)
   const token = localStorage.getItem('access_token')
   const { responseType, skipAuthRedirect, ...fetchOptions } = options
   const headers = new Headers(fetchOptions.headers || {})
@@ -12,10 +13,21 @@ export async function request(path, options = {}) {
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  const response = await fetch(`${baseUrl.replace(/\/$/, '')}${path}`, {
+  const requestUrl = `${baseUrl.replace(/\/$/, '')}${path}`
+  const hostname = new URL(requestUrl).hostname
+  const target = ['localhost', '127.0.0.1', '::1'].includes(hostname)
+    ? 'local'
+    : hostname.includes('onrender.com')
+      ? 'Render'
+      : 'remote'
+  console.info(`[API REQUEST] ${options.method || 'GET'} ${requestUrl} -> ${target}`)
+
+  const response = await fetch(requestUrl, {
     ...fetchOptions,
     headers,
   })
+  const backendTarget = response.headers.get('x-api-deployment') || target
+  console.info(`[API RESPONSE] ${response.status} ${requestUrl} <- ${backendTarget}`)
 
   if (!response.ok) {
     let message = 'Request failed'

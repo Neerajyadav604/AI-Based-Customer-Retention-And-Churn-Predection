@@ -1,10 +1,11 @@
 import io
 import os
+from time import perf_counter
 from pathlib import Path
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
-from fastapi import FastAPI, File, UploadFile, HTTPException, Depends
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Request
 from schemas.customer import CustomerInput, PredictionOutput, BatchOutput
 from ml.predictor import predict_churn, predict_batch, risk_level, threshold, model_name
 from ml.features import build_customer_features
@@ -32,6 +33,19 @@ frontend_url = os.getenv("FRONTEND_URL")
 if not frontend_url:
     raise RuntimeError("FRONTEND_URL is not configured.")
 
+deployment = (
+    "render"
+    if os.getenv("RENDER", "").lower() == "true"
+    or os.getenv("RENDER_SERVICE_ID")
+    else "local"
+)
+environment = os.getenv("APP_ENV", "development")
+backend_base_url = os.getenv(
+    "RENDER_EXTERNAL_URL",
+    f"http://localhost:{os.getenv('PORT', '8000')}",
+).rstrip("/")
+print(f"[API BASE URL] {backend_base_url}", flush=True)
+
 app = FastAPI(title="Churn Prediction API")
 init_db()   # make sure the SQLite tables exist
 app.add_middleware(
@@ -39,7 +53,22 @@ app.add_middleware(
     allow_origins=[frontend_url],
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-API-Deployment"],
 )
+
+@app.middleware("http")
+async def log_api_request(request: Request, call_next):
+    started_at = perf_counter()
+    response = await call_next(request)
+    duration_ms = (perf_counter() - started_at) * 1000
+    print(
+        f"[API REQUEST] deployment={deployment} "
+        f"method={request.method} path={request.url.path} "
+        f"status={response.status_code} duration_ms={duration_ms:.1f}",
+        flush=True,
+    )
+    response.headers["X-API-Deployment"] = deployment
+    return response
 
 app.include_router(auth_router)
 app.include_router(photo_router)
@@ -48,7 +77,11 @@ app.include_router(onboarding_router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "deployment": deployment,
+        "environment": environment,
+    }
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(customer: CustomerInput, user=Depends(current_user)):
