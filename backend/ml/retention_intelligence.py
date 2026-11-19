@@ -27,19 +27,19 @@ INTERCEPT = float(classifier.intercept_[0])
 FEATURE_LABELS = {
     "recency_days": "Days Since Last Purchase (Recency)",
     "frequency": "Total Order Count (Frequency)",
-    "monetary": "Total Customer Spend ($)",
+    "monetary": "Total Customer Spend (₹)",
     "tenure_days": "Relationship Duration (Tenure Days)",
     "total_items": "Total Items Purchased",
-    "avg_order_value": "Average Order Value ($)",
+    "avg_order_value": "Average Order Value (₹)",
 }
 
 FEATURE_DESCRIPTIONS = {
     "recency_days": "Longer gaps between orders strongly indicate waning customer interest.",
     "frequency": "Frequent repeat orders indicate high brand loyalty and habituation.",
-    "monetary": "Higher cumulative spend reflects greater financial commitment.",
+    "monetary": "Higher cumulative spend reflects greater financial commitment in Rupees (₹).",
     "tenure_days": "Longer account tenure typically offers loyalty stability.",
     "total_items": "Broad item purchase volume signals deep catalog engagement.",
-    "avg_order_value": "Healthy basket sizes demonstrate strong purchase intent.",
+    "avg_order_value": "Healthy average basket sizes demonstrate strong purchase intent.",
 }
 
 # In-memory store for action tracking status: { customer_id: { action_id: status, ... } }
@@ -116,7 +116,7 @@ def calculate_customer_shap(customer_data: Dict[str, Any]) -> Dict[str, Any]:
             "label": FEATURE_LABELS.get(name, name),
             "description": FEATURE_DESCRIPTIONS.get(name, ""),
             "raw_value": round(val, 2),
-            "unit": "days" if "days" in name else ("$" if name in ["monetary", "avg_order_value"] else "units"),
+            "unit": "days" if "days" in name else ("₹" if name in ["monetary", "avg_order_value"] else "units"),
             "shap_value": round(phi, 4),
             "impact_percentage": round(marginal_prob_shift, 1),
             "direction": "increases_churn" if phi > 0 else "decreases_churn",
@@ -185,8 +185,8 @@ def calculate_customer_shap(customer_data: Dict[str, Any]) -> Dict[str, Any]:
             "estimated_annual_spend": round(annual_spend_est, 2),
             "revenue_at_risk": revenue_at_risk,
             "estimated_clv": clv_est,
-            "cost_of_inaction": f"Loss of ${revenue_at_risk:,.2f} in annual recurring gross merchandise value.",
-            "recommended_budget": f"Up to ${min(revenue_at_risk * 0.15, 75.0):,.2f} in promotional concessions.",
+            "cost_of_inaction": f"Loss of ₹{revenue_at_risk:,.2f} in annual recurring revenue.",
+            "recommended_budget": f"Up to ₹{min(revenue_at_risk * 0.15, 6000.0):,.2f} in retention incentives.",
         },
         "recommendations": recommendations,
     }
@@ -195,7 +195,7 @@ def calculate_customer_shap(customer_data: Dict[str, Any]) -> Dict[str, Any]:
 def generate_customer_recommendations(primary_risk_driver: str, risk_tier: str, raw_features: np.ndarray) -> Dict[str, Any]:
     """
     Generates prescriptive, personalized retention playbooks,
-    incentives, and phased action plans.
+    incentives, and phased action plans with clear, simple business reasoning.
     """
     recency = raw_features[0]
     freq = raw_features[1]
@@ -203,56 +203,75 @@ def generate_customer_recommendations(primary_risk_driver: str, risk_tier: str, 
     aov = raw_features[5]
 
     if primary_risk_driver == "recency_days" or recency > 90:
-        headline = "Urgent Win-Back Reactivation Campaign"
-        incentive_offer = "25% VIP Reactivation Coupon with FREE Next-Day Shipping"
+        headline = "Win-Back Reactivation Campaign"
+        why_strategy = (
+            f"This customer has not placed an order in {int(recency)} days. Long periods of silence are the #1 warning "
+            f"sign of permanent churn. Instead of generic marketing, we apply an urgent win-back offer with a 72-hour "
+            f"deadline to bring them back to your store immediately."
+        )
+        incentive_offer = "25% Reactivation Voucher + FREE Shipping"
         incentive_badge = "Win-Back 25% Off"
         loyalty_benefit = "Automatic Upgrade to Tier-2 Gold Rewards on Next Order"
-        immediate_action = f"Trigger personalized automated 'We Miss You' email highlighting previously viewed items and offering 25% discount valid for 72 hours."
-        secondary_action = "Schedule CS concierge text check-in to confirm if delivery or product satisfaction caused inactivity."
-        nurture_action = "Enroll into monthly seasonal replenishment cadence with exclusive subscriber pricing."
+        immediate_action = f"Send an automated WhatsApp / Email note: 'We Miss You! Here is 25% off your favorite items, valid for 72 hours.'"
+        secondary_action = "Personal check-in message asking if their last delivery was satisfactory or if they need any assistance."
+        nurture_action = "Schedule monthly replenishment reminders for the products they previously bought."
     elif primary_risk_driver == "frequency" or freq <= 2:
-        headline = "Repeat Purchase Acceleration & Habituation Playbook"
+        headline = "Repeat Purchase Habituation Playbook"
+        why_strategy = (
+            f"This customer has only completed {int(freq)} order(s). Customers who only buy once or twice haven't formed a "
+            f"regular shopping habit with your store yet. This strategy rewards their next 2 purchases with extra loyalty points "
+            f"and bundle discounts to turn them into habitual repeat buyers."
+        )
         incentive_offer = "15% Multi-Pack / Bundle Discount on Category Favorites"
         incentive_badge = "Bundle Booster 15%"
-        loyalty_benefit = "Double Loyalty Points (2x Multiplier) on Next 2 Transactions"
-        immediate_action = "Deploy curated product carousel email showing top complementary accessories based on their first order."
-        secondary_action = "Deliver digital survey offering $10 wallet credit for feedback on initial order experience."
-        nurture_action = "Set up automated 30-day consumable reminder timed to predicted replenishment cycle."
+        loyalty_benefit = "Double Loyalty Points (2x Multiplier) on Next 2 Orders"
+        immediate_action = "Send a tailored product recommendation email highlighting items that pair perfectly with their last purchase."
+        secondary_action = "Share a 30-second customer feedback survey offering ₹100 instant wallet cash."
+        nurture_action = "Trigger an automated restock reminder when their previous items are estimated to run out."
     elif primary_risk_driver == "avg_order_value" or aov < 40:
-        headline = "Basket Expansion & Value Optimization Strategy"
-        incentive_offer = "$20 Off Any Cart Over $85 + Free Express Delivery"
-        incentive_badge = "$20 Off Threshold"
-        loyalty_benefit = "Instant 250 Bonus Rewards Points on Orders Above $75"
-        immediate_action = "Present tiered checkout threshold coupon to incentivize higher basket item counts."
-        secondary_action = "Send email featuring popular curated bundles with a single-click reorder link."
-        nurture_action = "Introduce VIP perks program requiring $200 quarterly threshold to unlock continuous free shipping."
+        headline = "Basket Size Expansion Strategy"
+        why_strategy = (
+            f"This customer's average order value is ₹{aov:,.2f}, which is below optimal levels. Providing a tiered threshold discount "
+            f"(e.g., spend ₹2,000 and get ₹300 off) motivates them to add more items to their cart each time they shop."
+        )
+        incentive_offer = "Flat ₹300 Off on Carts Above ₹2,000 + Free Express Delivery"
+        incentive_badge = "₹300 Off Threshold"
+        loyalty_benefit = "Instant 250 Bonus Reward Points on Orders Above ₹1,500"
+        immediate_action = "Present a smart checkout threshold banner offering ₹300 off if they add one more item to cart."
+        secondary_action = "Promote best-selling bundles with single-click checkout discounts."
+        nurture_action = "Introduce VIP perks milestone: unlock permanent free shipping on all orders this quarter."
     else:
-        headline = "High-Value Relationship Safeguard & Appreciation"
-        incentive_offer = "Exclusive Founder's Circle 10% Lifetime Loyalty Perk"
+        headline = "VIP Relationship Safeguard & Appreciation"
+        why_strategy = (
+            f"This customer is a valuable, high-spending client (₹{monetary:,.2f} lifetime value). Keeping high-tier accounts happy "
+            f"costs 5x less than acquiring a new customer. This strategy recognizes their status with VIP perks and personalized support."
+        )
+        incentive_offer = "Exclusive Founder's Circle 10% Lifetime Loyalty Discount"
         incentive_badge = "VIP Appreciation 10%"
-        loyalty_benefit = "Dedicated Concierge Account Specialist & Priority Fulfillment"
-        immediate_action = "Send executive appreciation note thanking customer for their continued brand patronage."
-        secondary_action = "Provide early access invitation to upcoming private product launch."
-        nurture_action = "Conduct quarterly loyalty review and invite to advisory feedback cohort."
+        loyalty_benefit = "Dedicated Concierge Account Specialist & Priority Delivery"
+        immediate_action = "Send a personalized executive thank-you message from the store founder with an exclusive 10% lifetime VIP code."
+        secondary_action = "Invite to early access preview of upcoming new product releases."
+        nurture_action = "Host quarterly VIP check-in to collect product feedback and special requests."
 
     return {
         "headline": headline,
+        "why_strategy": why_strategy,
         "primary_risk_driver": FEATURE_LABELS.get(primary_risk_driver, primary_risk_driver),
         "suggested_incentives": {
             "discount_offer": incentive_offer,
             "badge": incentive_badge,
             "loyalty_benefit": loyalty_benefit,
-            "estimated_cost_per_save": f"${min(monetary * 0.12, 45.0):.2f}",
-            "projected_roi": "3.8x to 5.2x ROI on saved retention value",
+            "estimated_cost_per_save": f"₹{min(monetary * 0.12, 1200.0):,.2f}",
+            "projected_roi": "3.8x to 5.2x ROI on saved retention revenue",
         },
         "action_plan": [
             {
                 "id": "action_24h",
                 "phase": "Immediate (0–24 Hours)",
-                "title": "Trigger Targeted Outreach & Offer",
+                "title": "Send Targeted Offer & Message",
                 "description": immediate_action,
                 "urgency": "High",
-                "channel": "Automated Email & SMS",
+                "channel": "WhatsApp / Email / SMS",
             },
             {
                 "id": "action_7d",
@@ -260,15 +279,15 @@ def generate_customer_recommendations(primary_risk_driver: str, risk_tier: str, 
                 "title": "Customer Success Engagement",
                 "description": secondary_action,
                 "urgency": "Medium",
-                "channel": "Concierge / CS Channel",
+                "channel": "Customer Success / Concierge",
             },
             {
                 "id": "action_30d",
                 "phase": "Long-Term (Days 8–30)",
-                "title": "Loyalty & Habituation Milestone",
+                "title": "Loyalty & Habit Formation",
                 "description": nurture_action,
                 "urgency": "Low",
-                "channel": "Lifecycle Marketing",
+                "channel": "Automated Lifecycle Cadence",
             },
         ],
     }

@@ -328,7 +328,7 @@ export default function RetentionIntelligence() {
             <div>
               <p className="text-[10px] text-[#8C6819] font-mono">Revenue at Risk</p>
               <p className="font-bold text-[#8C6819]">
-                ${(datasetData?.total_revenue_at_risk || 0).toLocaleString()}
+                ₹{(datasetData?.total_revenue_at_risk || 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -433,7 +433,7 @@ export default function RetentionIntelligence() {
             <div className="rounded-2xl border border-[#EBC69F]/60 bg-[#FFF8ED] p-3 text-center">
               <p className="text-[10px] font-bold uppercase text-[#494269]/70">Monetary Spend</p>
               <p className="font-mono text-xl font-bold text-[#291C2E]">
-                ${raw_attributes.monetary.toLocaleString()}
+                ₹{raw_attributes.monetary.toLocaleString()}
               </p>
               <p className="text-[10px] text-[#A99BB9]">Gross lifetime revenue</p>
             </div>
@@ -457,7 +457,7 @@ export default function RetentionIntelligence() {
             <div className="rounded-2xl border border-[#EBC69F]/60 bg-[#FFF8ED] p-3 text-center">
               <p className="text-[10px] font-bold uppercase text-[#494269]/70">Avg Order Value</p>
               <p className="font-mono text-xl font-bold text-[#291C2E]">
-                ${raw_attributes.avg_order_value.toFixed(2)}
+                ₹{raw_attributes.avg_order_value.toFixed(2)}
               </p>
               <p className="text-[10px] text-[#A99BB9]">Per-transaction basket</p>
             </div>
@@ -477,8 +477,48 @@ export default function RetentionIntelligence() {
             <DoodleSparkle size={18} className="text-[#E6B95F]" />
           </div>
           <p className="text-xs text-[#392D35] mt-1 max-w-3xl leading-relaxed">
-            Shapley Additive exPlanations (SHAP) provide exact game-theoretic feature attribution. The baseline prediction starts at the model population prior of{' '}
-            <strong>{base_model_probability}%</strong>. Each behavioral feature below either acts as a <em>Risk Driver</em> (pushing risk upward) or a <em>Protective Driver</em> (pulling risk downward).
+            Shapley Additive exPlanations (SHAP) break down exactly why Customer #{customer_id} received a {churn_percentage}% churn score.
+          </p>
+        </div>
+
+        {/* In Simple Words Callout Box */}
+        <div className="rounded-2xl border-2 border-[#EBC69F] bg-[#FFF8ED] p-4 text-xs space-y-3">
+          <div className="flex items-center gap-2 font-bold text-[#291C2E]">
+            <span className="text-base">💡</span>
+            <span className="font-editorial text-sm font-bold text-[#291C2E]">
+              How This Score Works (In Plain English)
+            </span>
+          </div>
+
+          <p className="text-[#392D35] leading-relaxed">
+            Every customer starts at our baseline average churn rate of <strong>{base_model_probability}%</strong>.
+            Our AI then analyzes Customer #{customer_id}&apos;s real shopping records:
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded-xl border border-[#C87979]/40 bg-[#FAECEC]/70 p-3">
+              <p className="font-bold text-[#8C2A2A] flex items-center gap-1.5">
+                <span>🔴</span>
+                <span>Red Factors (Pulling Them Away):</span>
+              </p>
+              <p className="text-[11px] text-[#8C2A2A] mt-1 leading-relaxed">
+                Habits that push their churn risk <strong>UP</strong> — such as ordering only once or twice, or not visiting for many days.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-[#7EAA79]/40 bg-[#EAF5E9]/70 p-3">
+              <p className="font-bold text-[#2D5A27] flex items-center gap-1.5">
+                <span>🟢</span>
+                <span>Green Factors (Keeping Them Loyal):</span>
+              </p>
+              <p className="text-[11px] text-[#2D5A27] mt-1 leading-relaxed">
+                Habits that pull their churn risk <strong>DOWN</strong> — such as healthy total spend in Rupees (₹) or a long relationship.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-[#494269] font-medium pt-0.5">
+            <strong>Bottom Line:</strong> Adding up all positive and negative factors shifts the score from {base_model_probability}% to <strong>{churn_percentage}%</strong>. The playbook in Section 6 targets their biggest red factor directly!
           </p>
         </div>
 
@@ -601,25 +641,50 @@ export default function RetentionIntelligence() {
                 <XAxis
                   type="number"
                   tick={{ fontSize: 11, fill: '#392D35' }}
+                  tickFormatter={(val) => Number(val).toFixed(2)}
                   domain={['dataMin - 0.2', 'dataMax + 0.2']}
                 />
                 <YAxis
                   type="category"
                   dataKey="feature"
-                  width={110}
+                  width={125}
                   tick={{ fontSize: 11, fill: '#291C2E', fontWeight: 600 }}
                 />
                 <Tooltip
-                  formatter={(value, name, props) => [
-                    `${value > 0 ? '+' : ''}${value} (Marginal Shift: ${props.payload.impact}%)`,
-                    'SHAP Attribution',
-                  ]}
-                  contentStyle={{
-                    backgroundColor: '#291C2E',
-                    borderRadius: '12px',
-                    color: '#FFF3E4',
-                    border: '1px solid #EBC69F',
-                    fontSize: '12px',
+                  cursor={{ fill: 'rgba(235, 198, 159, 0.25)' }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null
+                    const data = payload[0].payload
+                    const isPositive = data.shap > 0
+                    return (
+                      <div className="rounded-2xl border-2 border-[#EBC69F] bg-[#FFF8ED] p-3.5 shadow-xl text-[#291C2E]">
+                        <p className="font-editorial text-sm font-bold text-[#291C2E]">
+                          {data.fullLabel || data.feature}
+                        </p>
+                        <div className="mt-1.5 flex items-center gap-2 text-xs font-mono">
+                          <span
+                            className="font-bold px-2 py-0.5 rounded-md"
+                            style={{
+                              backgroundColor: isPositive ? '#FAECEC' : '#EAF5E9',
+                              color: isPositive ? '#B83838' : '#43823C',
+                            }}
+                          >
+                            SHAP: {isPositive ? '+' : ''}{Number(data.shap).toFixed(4)}
+                          </span>
+                          <span
+                            className="font-bold"
+                            style={{ color: isPositive ? '#B83838' : '#43823C' }}
+                          >
+                            {isPositive ? 'Pushes risk UP' : 'Pulls risk DOWN'} by {Math.abs(data.impact).toFixed(1)}%
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-[11px] font-sans text-[#392D35] max-w-xs">
+                          {isPositive
+                            ? '🔴 This habit is increasing their churn probability.'
+                            : '🟢 This habit helps protect customer retention.'}
+                        </p>
+                      </div>
+                    )
                   }}
                 />
                 <ReferenceLine x={0} stroke="#494269" strokeWidth={1.5} />
@@ -703,6 +768,21 @@ export default function RetentionIntelligence() {
             <strong>{recommendations.primary_risk_driver}</strong>. Applying this targeted playbook counters their specific drop-off motivation before permanent defection occurs.
           </p>
 
+          {/* Why Strategy is Applied Plain English Callout */}
+          <div className="rounded-2xl border-2 border-[#E6B95F] bg-white p-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🎯</span>
+              <h4 className="font-editorial text-sm font-bold text-[#8C6819]">
+                Why Was This Specific Strategy Applied? (In Plain Words)
+              </h4>
+            </div>
+            <p className="text-xs text-[#291C2E] leading-relaxed">
+              {recommendations.why_strategy || (
+                `Customer #${customer_id}'s primary warning sign is ${recommendations.primary_risk_driver.split('(')[0]}. Instead of generic discounts, this strategy directly counters their specific inactivity driver to turn them into a habitual repeat customer.`
+              )}
+            </p>
+          </div>
+
           {/* Suggested Discounts & Incentives */}
           <div className="rounded-2xl border border-[#E6B95F] bg-white p-4 space-y-3">
             <h4 className="text-xs font-bold uppercase text-[#8C6819] flex items-center gap-1.5">
@@ -756,7 +836,7 @@ export default function RetentionIntelligence() {
                   Annual Gross Revenue at Risk
                 </p>
                 <p className="font-mono text-2xl font-black text-[#B83838] mt-0.5">
-                  ${business_consequences.revenue_at_risk.toLocaleString()}
+                  ₹{business_consequences.revenue_at_risk.toLocaleString()}
                 </p>
                 <p className="text-[10px] text-[#8C2A2A] mt-1">
                   {business_consequences.cost_of_inaction}
@@ -768,7 +848,7 @@ export default function RetentionIntelligence() {
                   Customer Lifetime Value (CLV)
                 </p>
                 <p className="font-mono text-xl font-bold text-[#291C2E] mt-0.5">
-                  ${business_consequences.estimated_clv.toLocaleString()}
+                  ₹{business_consequences.estimated_clv.toLocaleString()}
                 </p>
                 <p className="text-[10px] text-[#A99BB9]">Projected over 36 months</p>
               </div>
