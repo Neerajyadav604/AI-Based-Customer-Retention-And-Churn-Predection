@@ -38,15 +38,11 @@ def call_gemini_api(prompt: str, system_instruction: str = SYSTEM_PROMPT) -> Opt
     if not api_key:
         return None
 
-    # Try preferred and available models
-    models_to_try = [
-        os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
-        "gemini-2.5-flash",
-        "gemini-flash-latest",
-        "gemini-1.5-flash",
-    ]
-    # Deduplicate while preserving order
-    models_to_try = list(dict.fromkeys(models_to_try))
+    # Try configured model, with fast fallback to latest flash
+    preferred_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
+    models_to_try = [preferred_model]
+    if preferred_model != "gemini-flash-latest":
+        models_to_try.append("gemini-flash-latest")
 
     headers = {"Content-Type": "application/json"}
     payload = {
@@ -66,7 +62,7 @@ def call_gemini_api(prompt: str, system_instruction: str = SYSTEM_PROMPT) -> Opt
     for model in models_to_try:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=12)
+            response = requests.post(url, headers=headers, json=payload, timeout=5)
             if response.status_code == 200:
                 data = response.json()
                 candidates = data.get("candidates", [])
@@ -75,12 +71,14 @@ def call_gemini_api(prompt: str, system_instruction: str = SYSTEM_PROMPT) -> Opt
                     if content_parts:
                         return content_parts[0].get("text", "").strip()
             elif response.status_code == 404:
-                # Model name not supported on this tier/version, try next
+                # Model name not supported on this endpoint, try next
                 continue
             else:
                 print(f"[GEMINI API ERROR] Model {model} status {response.status_code}: {response.text}")
         except Exception as e:
             print(f"[GEMINI API EXCEPTION] Model {model}:", e)
+            # If network error (DNS/connectivity), do not delay trying other gemini endpoints
+            break
 
     return None
 
@@ -107,7 +105,7 @@ def call_groq_api(prompt: str, system_instruction: str = SYSTEM_PROMPT) -> Optio
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response = requests.post(url, headers=headers, json=payload, timeout=5)
         if response.status_code == 200:
             data = response.json()
             choices = data.get("choices", [])
@@ -143,7 +141,7 @@ def call_openai_api(prompt: str, system_instruction: str = SYSTEM_PROMPT) -> Opt
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response = requests.post(url, headers=headers, json=payload, timeout=5)
         if response.status_code == 200:
             data = response.json()
             choices = data.get("choices", [])

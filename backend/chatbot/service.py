@@ -115,39 +115,47 @@ def process_chat_message(
 
     full_prompt += f"USER QUESTION: {message}\n\nPlease provide an insightful, well-structured response:"
 
-    # Attempt LLM API (Layer B)
-    llm_reply = query_llm_api(full_prompt)
+    # 4. Response Generation Hierarchy
+    # Primary: Real-time telemetry (Layer C) & Domain Knowledge Base / Intent Engine (Layer A)
+    # Fallback: Multi-Provider LLM API (Google Gemini primary, OpenAI fallback)
+    final_answer = None
+    active_layer = None
 
-    if llm_reply and len(llm_reply.strip()) > 15:
-        final_answer = llm_reply
-        active_layer = "Layer B: LLM API"
-    else:
-        # Layer A & Layer C Fallback Hierarchy:
-        # If question is about live metrics or specific customer, use live data synthesis
-        if intent_tag in ["live_metrics_query", "specific_customer_query"] or specific_customer:
-            final_answer = fallback_domain_response(
-                query=message,
-                rag_docs=rag_docs,
-                live_metrics=live_metrics,
-                model_diagnostics=model_diagnostics,
-                specific_customer=specific_customer,
-            )
-            active_layer = "Layer C: Live Telemetry Fallback"
-        else:
-            # Check if ModernIntentEngine has a direct intent response
-            intent_res = intent_engine.get_response(message, session_id=sid)
-            if intent_res:
-                final_answer = intent_res
-                active_layer = "Layer A: Knowledge Base Intent"
-            else:
-                final_answer = fallback_domain_response(
-                    query=message,
-                    rag_docs=rag_docs,
-                    live_metrics=live_metrics,
-                    model_diagnostics=model_diagnostics,
-                    specific_customer=specific_customer,
-                )
-                active_layer = "Layer A: RAG Fallback"
+    # Step 4a: Handle live cohort analytics and specific customer telemetry directly
+    if intent_tag in ["live_metrics_query", "specific_customer_query"] or specific_customer:
+        final_answer = fallback_domain_response(
+            query=message,
+            rag_docs=rag_docs,
+            live_metrics=live_metrics,
+            model_diagnostics=model_diagnostics,
+            specific_customer=specific_customer,
+        )
+        active_layer = "Layer C: Live Telemetry"
+
+    # Step 4b: Handle recognized domain knowledge intents directly (instant, grounded)
+    if not final_answer and intent_confidence >= 0.40:
+        intent_res = intent_engine.get_response(message, session_id=sid)
+        if intent_res:
+            final_answer = intent_res
+            active_layer = "Layer A: Knowledge Base Intent"
+
+    # Step 4c: Fallback API - Query LLM API (Gemini with OpenAI fallback) for open-ended or unmatched queries
+    if not final_answer:
+        llm_reply = query_llm_api(full_prompt)
+        if llm_reply and len(llm_reply.strip()) > 15:
+            final_answer = llm_reply
+            active_layer = "Layer B: LLM Fallback API"
+
+    # Step 4d: Ultimate Local Fallback - if LLM API is unreachable or offline
+    if not final_answer:
+        final_answer = fallback_domain_response(
+            query=message,
+            rag_docs=rag_docs,
+            live_metrics=live_metrics,
+            model_diagnostics=model_diagnostics,
+            specific_customer=specific_customer,
+        )
+        active_layer = "Layer A: Local Domain Fallback"
 
     # 5. Maintain Conversation History
     CONVERSATION_HISTORY[conv_key].append({"role": "user", "content": message})
