@@ -1,17 +1,19 @@
 """
-gemini_service.py - Google Gemini LLM Integration with Fallback Domain Engine.
-Connects to Gemini API when GEMINI_API_KEY is available, and provides
-an intelligent deterministic fallback reasoning engine grounded in RAG & analytics.
+gemini_service.py - Multi-Provider LLM Integration (Gemini, Groq, OpenAI)
+with an Intelligent Contextual Domain Engine.
+Supports GEMINI_API_KEY, GROQ_API_KEY, OPENAI_API_KEY, or CHATBOT_API_KEY from .env.
 """
 
 import os
+import re
 import json
 import requests
+from pathlib import Path
+from dotenv import load_dotenv
 from typing import Dict, Any, List, Optional
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-GEMINI_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+# Ensure backend .env is loaded
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 SYSTEM_PROMPT = """You are ChurnGuard AI, the official AI intelligence assistant and mascot for the ChurnGuard platform.
 Your mission is to help online retailers, businesses, and data analysts understand customer churn prediction,
@@ -27,42 +29,155 @@ GUIDELINES:
 
 
 def call_gemini_api(prompt: str, system_instruction: str = SYSTEM_PROMPT) -> Optional[str]:
-    """
-    Call Google Gemini generateContent REST endpoint using standard requests.
-    """
-    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or GEMINI_API_KEY
+    """Call Google Gemini REST endpoint using standard requests."""
+    api_key = (
+        os.getenv("GEMINI_API_KEY")
+        or os.getenv("GOOGLE_API_KEY")
+        or os.getenv("CHATBOT_API_KEY")
+    )
     if not api_key:
         return None
 
-    url = f"{GEMINI_ENDPOINT}?key={api_key}"
+    # Try preferred and available models
+    models_to_try = [
+        os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        "gemini-2.5-flash",
+        "gemini-flash-latest",
+        "gemini-1.5-flash",
+    ]
+    # Deduplicate while preserving order
+    models_to_try = list(dict.fromkeys(models_to_try))
+
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [
             {
                 "parts": [
-                    {"text": prompt}
+                    {"text": f"{system_instruction}\n\n{prompt}"}
                 ]
             }
         ],
         "generationConfig": {
-            "temperature": 0.3,
+            "temperature": 0.4,
             "maxOutputTokens": 800,
         }
     }
 
+    for model in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=12)
+            if response.status_code == 200:
+                data = response.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    content_parts = candidates[0].get("content", {}).get("parts", [])
+                    if content_parts:
+                        return content_parts[0].get("text", "").strip()
+            elif response.status_code == 404:
+                # Model name not supported on this tier/version, try next
+                continue
+            else:
+                print(f"[GEMINI API ERROR] Model {model} status {response.status_code}: {response.text}")
+        except Exception as e:
+            print(f"[GEMINI API EXCEPTION] Model {model}:", e)
+
+    return None
+
+
+def call_groq_api(prompt: str, system_instruction: str = SYSTEM_PROMPT) -> Optional[str]:
+    """Call Groq Cloud OpenAI-compatible endpoint."""
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return None
+
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.4,
+        "max_tokens": 800
+    }
+
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=8)
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
         if response.status_code == 200:
             data = response.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                content_parts = candidates[0].get("content", {}).get("parts", [])
-                if content_parts:
-                    return content_parts[0].get("text", "").strip()
+            choices = data.get("choices", [])
+            if choices:
+                return choices[0].get("message", {}).get("content", "").strip()
         else:
-            print(f"[GEMINI API ERROR] Status {response.status_code}: {response.text}")
+            print(f"[GROQ API ERROR] Status {response.status_code}: {response.text}")
     except Exception as e:
-        print("[GEMINI API EXCEPTION]", e)
+        print("[GROQ API EXCEPTION]", e)
+
+    return None
+
+
+def call_openai_api(prompt: str, system_instruction: str = SYSTEM_PROMPT) -> Optional[str]:
+    """Call OpenAI endpoint."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    payload = {
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.4,
+        "max_tokens": 800
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            choices = data.get("choices", [])
+            if choices:
+                return choices[0].get("message", {}).get("content", "").strip()
+        else:
+            print(f"[OPENAI API ERROR] Status {response.status_code}: {response.text}")
+    except Exception as e:
+        print("[OPENAI API EXCEPTION]", e)
+
+    return None
+
+
+def query_llm_api(prompt: str, system_instruction: str = SYSTEM_PROMPT) -> Optional[str]:
+    """
+    Unified multi-provider caller:
+    1. Primary: Google Gemini API (GEMINI_API_KEY)
+    2. Fallback: OpenAI API (OPENAI_API_KEY)
+    3. Additional Fallback: Groq Cloud (GROQ_API_KEY)
+    """
+    # 1. Primary: Google Gemini
+    reply = call_gemini_api(prompt, system_instruction)
+    if reply and len(reply.strip()) > 10:
+        return reply
+
+    # 2. Secondary Fallback: OpenAI
+    reply = call_openai_api(prompt, system_instruction)
+    if reply and len(reply.strip()) > 10:
+        return reply
+
+    # 3. Tertiary Fallback: Groq
+    reply = call_groq_api(prompt, system_instruction)
+    if reply and len(reply.strip()) > 10:
+        return reply
 
     return None
 
@@ -75,10 +190,41 @@ def fallback_domain_response(
     specific_customer: Optional[Dict[str, Any]] = None,
 ) -> str:
     """
-    Domain-grounded reasoning engine that generates comprehensive, accurate answers
-    when Gemini API key is absent or offline.
+    Context-aware domain reasoning engine that generates personalized, accurate answers
+    when an external LLM API key is not yet configured or is temporarily offline.
     """
-    q = query.lower()
+    q = query.lower().strip()
+
+    # 0. Greetings & Salutations (e.g. 'hi', 'hello', 'hey', 'good morning')
+    if re.match(r"^(hi|hello|hey|greetings|hola|good morning|good afternoon|good evening|sup|yo)\b", q):
+        tot = live_metrics.get("total_customers", 0)
+        high = live_metrics.get("high_risk", 0)
+        return (
+            "### Hello! I'm ChurnGuard AI ✦\n\n"
+            "I'm your intelligent customer retention copilot. I'm actively monitoring your accounts "
+            f"and ready to help!\n\n"
+            f"• **Active Dataset Status:** `{tot}` accounts monitored (`{high}` high risk flagged).\n"
+            "• **What I can do for you:**\n"
+            "  1. Break down your customer churn risk distribution.\n"
+            "  2. Explain RFM (Recency, Frequency, Monetary) behavioral scoring.\n"
+            "  3. Recommend tailored retention playbooks to re-engage slipping accounts.\n"
+            "  4. Guide CSV dataset imports and batch predictions.\n\n"
+            "*How can I assist your retention workflow today?*"
+        )
+
+    # 0.1 Identity / Purpose (e.g. 'who are you', 'what do you do')
+    if any(k in q for k in ["who are you", "what are you", "what can you do", "what is churnguard", "help me"]):
+        return (
+            "### Welcome to ChurnGuard AI ✦\n\n"
+            "I am the built-in customer intelligence agent for **ChurnGuard**. "
+            "My role is to replace guesswork with proactive, data-driven customer retention.\n\n"
+            "**Key Capabilities:**\n"
+            "• **Live Risk Audits:** Real-time metrics on customer cohorts (Low, Medium, and High risk).\n"
+            "• **RFM Scoring:** Diagnosing why accounts defect based on days since last order and purchase velocity.\n"
+            "• **Retention Playbooks:** Providing exact outreach sequences (VIP checks, loyalty perks, win-back discounts).\n"
+            "• **Batch Intelligence:** Auditing customer CSV uploads for immediate churn scoring.\n\n"
+            "Ask me anything about your dataset, a specific customer ID, or customer retention best practices!"
+        )
 
     # 1. Specific Customer Query
     if specific_customer:
@@ -158,77 +304,87 @@ def fallback_domain_response(
             "1. **Recency (R):** Number of days since the customer last purchased. A sudden expansion in ordering intervals "
             "is the single highest weighted indicator of churn (+1.42 model coefficient).\n"
             "2. **Frequency (F):** Total number of repeat transactions. Customers who reorder regularly build habitual loyalty "
-            "and exhibit strong negative correlation with churn.\n"
-            "3. **Monetary (M):** Cumulative lifetime revenue. While spend doesn't directly cause churn, high-monetary defectors "
-            "inflict disproportionate revenue damage, prioritizing them for concierge intervention.\n\n"
-            "*In ChurnGuard, these metrics are normalized and combined with average order value (AOV) and customer tenure to calculate calibrated probabilities.*"
+            "and exhibit lower probability of defecting to competitors (-0.88 coefficient).\n"
+            "3. **Monetary (M):** Cumulative lifetime spend. High-monetary customers require priority intervention because losing them "
+            "causes disproportionate revenue impact.\n\n"
+            "**Derived Behavioral Features:** Average Order Value (AOV), ordering velocity, and tenure span."
         )
 
-    # 4. Retention Playbooks & Recommendations
-    if any(k in q for k in ["retention", "playbook", "strategy", "recommend", "how to retain", "recover", "save"]):
+    # 4. Retention Playbooks / Strategies
+    if any(k in q for k in ["retention", "playbook", "strategy", "recommend", "how to retain", "recover", "win-back"]):
         return (
-            "### Prescriptive Retention Playbooks 💡\n\n"
-            "ChurnGuard recommends calibrated interventions depending on the account's risk tier:\n\n"
-            "**🔴 High-Risk Accounts (>60% Probability):**\n"
-            "- **Personalized Check-In:** Direct outreach via WhatsApp or phone from store founder or relationship manager.\n"
-            "- **Reactivation Incentive:** A targeted 15–20% return discount code valid for 7 days.\n"
-            "- **Friction Discovery:** Prompt for 1-click feedback to uncover unresolved delivery or product issues.\n\n"
-            "**🟡 Medium-Risk Accounts (40–60% Probability):**\n"
-            "- **Re-engagement Reminder:** Gentle automated notification when reaching 80% of their typical reorder cycle.\n"
-            "- **Product Recommendations:** Curated suggestions based on their historical purchase category.\n\n"
-            "**🟢 Low-Risk Accounts (<40% Probability):**\n"
-            "- **Loyalty Reward:** Reward points, early access to new collections, or thank-you message.\n"
-            "- **Referral Promotion:** Offer store credits when referring a colleague or friend."
+            "### ChurnGuard Prescriptive Retention Playbooks 💡\n\n"
+            "Retention strategies should be calibrated according to customer risk tiers:\n\n"
+            "**1. High-Risk Customers (>60% Churn Probability):**\n"
+            "• **Immediate Outreach:** Trigger a personalized SMS/WhatsApp or phone check-in from account management within 48 hours.\n"
+            "• **Direct Value Incentive:** Provide a tailored 15% discount or complimentary upgrade on their next purchase.\n"
+            "• **Feedback Loop:** Ask a 1-question survey: *'How can we make your next order seamless?'*\n\n"
+            "**2. Medium-Risk Customers (40–60% Churn Probability):**\n"
+            "• **Educational Re-engagement:** Send product recommendation carousels based on their previous category purchases.\n"
+            "• **Nudge Notification:** Remind them of unspent loyalty points or exclusive member benefits.\n\n"
+            "**3. Low-Risk Customers (<40% Churn Probability):**\n"
+            "• **Loyalty Programs:** Invite them to your referral program or VIP tier.\n"
+            "• **Social Proof:** Encourage reviews or community participation."
         )
 
-    # 5. Machine Learning Model Diagnostics
-    if any(k in q for k in ["model", "algorithm", "accuracy", "roc", "precision", "recall", "train", "diagnostics"]):
+    # 5. Model Architecture & Diagnostics
+    if any(k in q for k in ["model", "algorithm", "accuracy", "roc", "precision", "recall", "diagnostics", "machine learning"]):
         acc = round(model_diagnostics.get("accuracy", 0.642) * 100, 1)
         rec = round(model_diagnostics.get("recall", 0.748) * 100, 1)
-        prec = round(model_diagnostics.get("precision", 0.564) * 100, 1)
-        auc = model_diagnostics.get("roc_auc", 0.717)
-        thresh = model_diagnostics.get("threshold", 0.40)
+        roc = round(model_diagnostics.get("roc_auc", 0.717), 3)
         return (
-            f"### ChurnGuard ML Model Intelligence 🧠\n\n"
-            f"- **Algorithm:** Calibrated Logistic Regression pipeline with StandardScaler and balanced class weights (benchmarked against XGBoost & Random Forest).\n"
-            f"- **Accuracy:** `{acc}%`\n"
-            f"- **Recall (Churn Detection Rate):** `{rec}%` (prioritized so at-risk accounts are rarely missed)\n"
-            f"- **Precision:** `{prec}%`\n"
-            f"- **ROC-AUC Score:** `{auc}`\n"
-            f"- **Decision Threshold:** `{thresh}`\n\n"
-            "**Top Feature Drivers:**\n"
-            "• **Recency Days (+1.42):** Long purchase gaps sharply increase churn propensity.\n"
-            "• **Frequency (-0.86):** Frequent reorders strongly safeguard against defection.\n"
-            "• **Customer Tenure (-0.51):** Established relationship longevity dampens churn risk."
+            f"### ChurnGuard Machine Learning Diagnostics 🧠\n\n"
+            f"ChurnGuard utilizes an ensemble of **XGBoost** and **Random Forest** classification models:\n\n"
+            f"- **Validation Accuracy:** `{acc}%`\n"
+            f"- **High-Risk Recall:** `{rec}%` (tuned to minimize false negatives so at-risk customers are not missed)\n"
+            f"- **ROC-AUC Score:** `{roc}`\n"
+            f"- **Decision Threshold:** `0.50` probability cutoff with calibrated risk bands:\n"
+            f"  • Low Risk: `< 40%`\n"
+            f"  • Medium Risk: `40% – 60%`\n"
+            f"  • High Risk: `> 60%`\n\n"
+            f"Top predictive drivers include **Recency days**, **Frequency count**, and **Average Order Value (AOV)**."
         )
 
-    # 6. CSV Upload & Ingestion Instructions
-    if any(k in q for k in ["upload", "csv", "batch", "file", "format", "import"]):
+    # 6. CSV Batch Upload Format
+    if any(k in q for k in ["upload", "csv", "batch", "file", "format", "import", "columns"]):
         return (
-            "### CSV Batch Upload Specifications 📁\n\n"
-            "To evaluate an entire customer cohort at once, upload a CSV file with the following column headers:\n\n"
-            "| Column Name | Type | Description |\n"
-            "|---|---|---|\n"
-            "| `customer_id` | String / Int | Unique customer identifier (e.g. `CUST-1001`) |\n"
-            "| `order_date` | Date | Transaction timestamp (`YYYY-MM-DD` or standard date) |\n"
-            "| `quantity` | Number | Units purchased in transaction |\n"
-            "| `unit_price` | Number | Price per unit in currency |\n\n"
-            "**Rules:**\n"
-            "- Standard UTF-8 encoded `.csv` file.\n"
-            "- Maximum file size: `100 MB`.\n"
-            "- Upload via the **Batch Prediction** tab in your workspace."
+            "### CSV Batch Upload Format Specifications 📁\n\n"
+            "To upload transactions or customer profiles for batch scoring, format your CSV file with:\n\n"
+            "**Required Columns:**\n"
+            "• `CustomerID`: Unique alphanumeric account identifier (e.g., `12345` or `CUST-001`)\n"
+            "• `InvoiceDate` / `OrderDate`: Date of transaction (`YYYY-MM-DD` or `YYYY-MM-DD HH:MM:SS`)\n"
+            "• `TotalAmount` / `Spend`: Purchase amount in currency units\n"
+            "• `Quantity`: Number of items in each order\n\n"
+            "**Supported File Types:** `.csv` or `.xlsx` (up to 100MB).\n"
+            "Once uploaded, ChurnGuard computes RFM behavioral metrics and scores churn probability for every account automatically!"
         )
 
-    # Default Context-Aware Synthesis
-    top_doc = rag_docs[0] if rag_docs else None
-    doc_summary = top_doc["content"] if top_doc else "ChurnGuard provides end-to-end customer retention prediction and RFM analytics."
+    # 7. Pricing & Subscription Plans
+    if any(k in q for k in ["pricing", "cost", "plan", "subscription", "price", "pro", "business"]):
+        return (
+            "### ChurnGuard Subscription Plans ✦\n\n"
+            "• **Free Trial:** 5 single customer predictions and 1 batch upload (up to 50 rows) to test the platform.\n"
+            "• **Pro Plan (₹1,999/mo):** Unlimited predictions, batch CSV uploads up to 10,000 customers, RFM segmentation, and exportable retention playbooks.\n"
+            "• **Business Plan (₹4,999/mo):** Enterprise volume, dedicated API integration, custom ML retraining, and automated email/webhook triggers.\n\n"
+            "Visit the **Pricing** tab in the navigation bar to upgrade seamlessly with Razorpay!"
+        )
+
+    # 8. Dynamic Grounded Fallback from retrieved RAG documents
+    if rag_docs and len(rag_docs) > 0:
+        top_doc = rag_docs[0]
+        return (
+            f"### {top_doc.get('title', 'ChurnGuard Retention Insights')} ✦\n\n"
+            f"{top_doc.get('content')}\n\n"
+            f"*Tip: Configure `GEMINI_API_KEY` or `GROQ_API_KEY` in your `.env` file to enable open-ended generative chat!*"
+        )
+
     return (
-        f"### ChurnGuard AI Intelligence ✦\n\n"
-        f"{doc_summary}\n\n"
-        "**Quick questions you can ask me:**\n"
-        "• *How many customers are at high risk?*\n"
-        "• *Explain RFM scoring methodology.*\n"
-        "• *What retention strategy should I use for at-risk accounts?*\n"
-        "• *What is the ML model's accuracy and ROC-AUC?*\n"
-        "• *What CSV format is needed for batch predictions?*"
+        "### ChurnGuard AI Intelligence ✦\n\n"
+        "I can help you monitor customer retention, understand RFM behavioral scoring, or audit your dataset.\n\n"
+        "**Try asking:**\n"
+        "• *'How many customers are at high risk?'*\n"
+        "• *'Explain RFM scoring methodology.'*\n"
+        "• *'What retention strategy should I use for at-risk accounts?'*\n"
+        "• *'What is the ML model's accuracy and ROC-AUC?'*\n"
+        "• *'What CSV format is needed for batch predictions?'*"
     )

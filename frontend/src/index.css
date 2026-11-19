@@ -296,3 +296,26 @@ input:focus, select:focus, textarea:focus {
   animation: robot-eye-blink 4.2s infinite;
   transform-origin: center;
 }
+
+/* Robot Screen-Wide Entrance Glide */
+@keyframes robot-swoop-entrance {
+  0% {
+    transform: translate(-45vw, -35vh) scale(0.65) rotate(-14deg);
+    opacity: 0;
+  }
+  45% {
+    transform: translate(-15vw, -12vh) scale(1.08) rotate(6deg);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(-4vw, -2vh) scale(0.96) rotate(-2deg);
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-robot-entrance {
+  animation: robot-swoop-entrance 2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}

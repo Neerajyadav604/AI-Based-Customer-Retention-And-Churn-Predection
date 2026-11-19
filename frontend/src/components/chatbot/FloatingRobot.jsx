@@ -1,39 +1,154 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 
 export default function FloatingRobot({ onClick, isOpen }) {
   const [isHovered, setIsHovered] = useState(false)
+  const [isEntering, setIsEntering] = useState(true)
+  const [isDragging, setIsDragging] = useState(false)
+  
+  // Custom position state if dragged; otherwise null uses default bottom-right anchoring
+  const [coords, setCoords] = useState(null)
+  
+  const dragRef = useRef({
+    startX: 0,
+    startY: 0,
+    elemX: 0,
+    elemY: 0,
+    hasMoved: false,
+    active: false,
+  })
 
-  // When chatbot panel is open, hide the floating robot trigger so it does not overlap/clutter underneath
+  const containerRef = useRef(null)
+
+  // Initial Entrance: Float across the screen on load and then stabilize smoothly
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsEntering(false)
+    }, 2100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Dragging handlers (Mouse & Touch)
+  const handlePointerDown = useCallback((e) => {
+    // Left click or touch only
+    if (e.button && e.button !== 0) return
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    dragRef.current = {
+      startX: clientX,
+      startY: clientY,
+      elemX: rect.left,
+      elemY: rect.top,
+      hasMoved: false,
+      active: true,
+    }
+
+    setIsDragging(true)
+  }, [])
+
+  useEffect(() => {
+    function handlePointerMove(e) {
+      if (!dragRef.current.active) return
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY
+
+      const deltaX = clientX - dragRef.current.startX
+      const deltaY = clientY - dragRef.current.startY
+
+      if (Math.hypot(deltaX, deltaY) > 5) {
+        dragRef.current.hasMoved = true
+      }
+
+      // Constrain within viewport boundaries
+      const newX = Math.max(12, Math.min(window.innerWidth - 84, dragRef.current.elemX + deltaX))
+      const newY = Math.max(12, Math.min(window.innerHeight - 84, dragRef.current.elemY + deltaY))
+
+      setCoords({ x: newX, y: newY })
+    }
+
+    function handlePointerUp() {
+      if (!dragRef.current.active) return
+
+      const wasDrag = dragRef.current.hasMoved
+      dragRef.current.active = false
+      setIsDragging(false)
+
+      // If user simply clicked without dragging, trigger open
+      if (!wasDrag) {
+        onClick()
+      }
+    }
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handlePointerMove, { passive: true })
+      window.addEventListener('mouseup', handlePointerUp)
+      window.addEventListener('touchmove', handlePointerMove, { passive: true })
+      window.addEventListener('touchend', handlePointerUp)
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove)
+      window.removeEventListener('mouseup', handlePointerUp)
+      window.removeEventListener('touchmove', handlePointerMove)
+      window.removeEventListener('touchend', handlePointerUp)
+    }
+  }, [isDragging, onClick])
+
+  // When chatbot panel is open, hide the floating robot trigger so it does not overlap
   if (isOpen) return null
+
+  // Determine speech badge position (left or right of robot depending on screen coordinates)
+  const isRightSide = !coords || coords.x > window.innerWidth / 2
+
+  const containerStyle = coords
+    ? {
+        position: 'fixed',
+        left: `${coords.x}px`,
+        top: `${coords.y}px`,
+        zIndex: 50,
+      }
+    : {}
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-end gap-3 select-none pointer-events-auto"
+      ref={containerRef}
+      style={containerStyle}
+      className={`${
+        coords ? '' : 'fixed bottom-6 right-6 z-50'
+      } flex items-center select-none ${
+        isRightSide ? 'flex-row-reverse' : 'flex-row'
+      } gap-3 pointer-events-auto transition-transform ${
+        isEntering ? 'animate-robot-entrance' : ''
+      }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Interactive Speech Prompt Badge */}
-      <div
-        onClick={onClick}
-        className={`cursor-pointer transition-all duration-300 transform ${
-          isHovered ? 'opacity-100 translate-y-0 scale-100' : 'opacity-90 translate-y-1 scale-95'
-        } hidden sm:flex items-center gap-2 rounded-2xl border border-[#EBC69F] bg-[#FFF8ED] px-3.5 py-2 text-xs font-semibold text-[#291C2E] shadow-[0_8px_24px_rgba(41,28,46,0.18)] backdrop-blur-md hover:border-[#E6B95F]`}
-      >
-        <span className="flex size-2 rounded-full bg-emerald-500 animate-ping" />
-        <span>Ask ChurnGuard AI</span>
-        <span className="text-[#E6B95F] text-xs">✦</span>
-      </div>
-
-      {/* Floating 3D AI Robot Mascot Trigger with Continuous Physics Float */}
+      {/* Floating 3D AI Robot Mascot Trigger */}
       <div className="relative flex flex-col items-center">
         {/* Soft Ground Shadow that expands/contracts as robot floats */}
-        <div className="absolute -bottom-2 w-12 h-3 rounded-full bg-[#291C2E] animate-robot-shadow blur-[2px] pointer-events-none" />
+        <div
+          className={`absolute -bottom-2 w-12 h-3 rounded-full bg-[#291C2E] blur-[2px] pointer-events-none transition-opacity ${
+            isDragging ? 'opacity-10 scale-50' : 'animate-robot-shadow'
+          }`}
+        />
 
-        <button
-          type="button"
-          onClick={onClick}
-          aria-label="Open ChurnGuard AI Assistant"
-          className="group relative flex size-16 sm:size-18 items-center justify-center rounded-full p-1 cursor-pointer transition-transform duration-300 hover:scale-110 active:scale-95 focus:outline-none animate-robot-float"
+        <div
+          onMouseDown={handlePointerDown}
+          onTouchStart={handlePointerDown}
+          role="button"
+          tabIndex={0}
+          aria-label="ChurnGuard AI Assistant Mascot - Drag or Click"
+          title="Drag anywhere on screen or click to chat"
+          className={`group relative flex size-16 sm:size-18 items-center justify-center rounded-full p-1 transition-transform duration-200 ${
+            isDragging
+              ? 'cursor-grabbing scale-110 rotate-6 shadow-2xl'
+              : 'cursor-grab hover:scale-105 active:scale-95'
+          } focus:outline-none ${!isDragging && !isEntering ? 'animate-robot-float' : ''}`}
         >
           {/* Soft Ambient Gold Aura Glow */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#E6B95F]/45 via-[#F4D3B5]/30 to-transparent blur-md group-hover:blur-lg animate-robot-glow transition-all" />
@@ -44,7 +159,7 @@ export default function FloatingRobot({ onClick, isOpen }) {
             {/* Animated 3D-Style AI Robot SVG */}
             <svg
               viewBox="0 0 100 100"
-              className="size-12 sm:size-14 transform transition-transform duration-300 group-hover:-translate-y-1"
+              className="size-12 sm:size-14 transform transition-transform duration-300 group-hover:-translate-y-1 pointer-events-none"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
@@ -132,8 +247,22 @@ export default function FloatingRobot({ onClick, isOpen }) {
               ✦
             </span>
           </div>
-        </button>
+        </div>
       </div>
+
+      {/* Interactive Speech Prompt Badge */}
+      {!isDragging && (
+        <div
+          onClick={onClick}
+          className={`cursor-pointer transition-all duration-300 transform ${
+            isHovered ? 'opacity-100 translate-y-0 scale-100' : 'opacity-90 translate-y-0.5 scale-95'
+          } hidden sm:flex items-center gap-2 rounded-2xl border border-[#EBC69F] bg-[#FFF8ED] px-3.5 py-2 text-xs font-semibold text-[#291C2E] shadow-[0_8px_24px_rgba(41,28,46,0.18)] backdrop-blur-md hover:border-[#E6B95F]`}
+        >
+          <span className="flex size-2 rounded-full bg-emerald-500 animate-ping" />
+          <span>Ask ChurnGuard AI</span>
+          <span className="text-[#E6B95F] text-xs">✦</span>
+        </div>
+      )}
     </div>
   )
 }

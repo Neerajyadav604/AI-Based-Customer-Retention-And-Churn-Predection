@@ -12,7 +12,7 @@ from chatbot.analytics import (
     find_customer_details,
     get_model_diagnostics_summary,
 )
-from chatbot.gemini_service import call_gemini_api, fallback_domain_response
+from chatbot.gemini_service import query_llm_api, fallback_domain_response
 
 # In-memory session message history: { session_or_email: [ {"role": "...", "content": "..."} ] }
 CONVERSATION_HISTORY: Dict[str, List[Dict[str, str]]] = {}
@@ -91,11 +91,11 @@ def process_chat_message(
 
     full_prompt += f"USER QUESTION: {message}\n\nPlease provide a clear, accurate, and helpful response:"
 
-    # 5. Invoke Gemini LLM with Domain Fallback
-    gemini_reply = call_gemini_api(full_prompt)
+    # 5. Invoke Multi-Provider LLM (Gemini, Groq, OpenAI) with Domain Fallback
+    llm_reply = query_llm_api(full_prompt)
 
-    if gemini_reply and len(gemini_reply.strip()) > 20:
-        final_answer = gemini_reply
+    if llm_reply and len(llm_reply.strip()) > 10:
+        final_answer = llm_reply
     else:
         # Fallback to deterministic domain engine
         final_answer = fallback_domain_response(
