@@ -264,11 +264,11 @@ export function sendContact(name, email, message) {
 // CHATBOT API INTEGRATION
 // ==========================================
 
-export function sendChatMessage(message, sessionId) {
-  return request('/api/chat/message', {
+export function sendChatMessage(message, sessionId, context = {}) {
+  return request('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, session_id: sessionId }),
+    body: JSON.stringify({ message, session_id: sessionId, context }),
     skipAuthRedirect: true,
   })
 }

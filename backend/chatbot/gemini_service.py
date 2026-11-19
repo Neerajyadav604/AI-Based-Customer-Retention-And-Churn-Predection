@@ -264,8 +264,11 @@ def fallback_domain_response(
             )
         return reply
 
-    # 2. Live Cohort / High Risk Query
-    if any(k in q for k in ["how many", "count", "high risk", "at risk", "summary", "stats", "overview"]):
+    # 2. Live Cohort / High Risk / Defection Queries
+    if any(k in q for k in [
+        "how many", "count", "high risk", "at risk", "summary", "stats", "overview",
+        "which customers", "most likely", "likely to churn", "highest churn", "top risk", "highest risk"
+    ]):
         tot = live_metrics.get("total_customers", 0)
         high = live_metrics.get("high_risk", 0)
         med = live_metrics.get("medium_risk", 0)

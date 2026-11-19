@@ -1,0 +1,159 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": [
+        "hi",
+        "hello",
+        "hey",
+        "good morning",
+        "good afternoon",
+        "good evening",
+        "is anyone there",
+        "greetings",
+        "start"
+      ],
+      "responses": [
+        "Hello! I am ChurnGuard AI, your customer retention intelligence copilot. How can I assist you with your customer cohorts or churn analytics today?",
+        "Hi there! Welcome to ChurnGuard AI. I can help audit your customer risk, explain RFM scoring, or guide batch predictions.",
+        "Greetings! I'm your ChurnGuard retention assistant. Ask me about your dashboard metrics, at-risk accounts, or retention playbooks."
+      ],
+      "context_set": "greeting_context"
+    },
+    {
+      "tag": "identity_help",
+      "patterns": [
+        "who are you",
+        "what are you",
+        "what is churnguard",
+        "what can you do",
+        "help me",
+        "how does this work"
+      ],
+      "responses": [
+        "I am ChurnGuard AI, the official intelligence assistant for ChurnGuard. I analyze customer order histories, calculate RFM behavioral scores, identify churn risk cohorts (High, Medium, Low), and provide prescriptive customer retention playbooks.",
+        "I am your automated retention strategist. I monitor your uploaded customer datasets, diagnose why customers defect, and recommend timely interventions before accounts churn."
+      ],
+      "context_set": "overview_context"
+    },
+    {
+      "tag": "dashboard_explanation",
+      "patterns": [
+        "explain my churn dashboard",
+        "explain dashboard",
+        "what does this dashboard show",
+        "walk me through the dashboard",
+        "how to read the dashboard"
+      ],
+      "responses": [
+        "### ChurnGuard Dashboard Overview ✦\n\nYour dashboard provides real-time retention intelligence across several operational widgets:\n1. **Executive KPI Cards:** Shows Total Monitored Customers, Active Churn Rate, Customers at High Risk (>60% probability), and Retention Benchmark.\n2. **Churn Trends & Historical Comparison:** Trajectory of billing cycles comparing empirical defection against model prediction envelopes.\n3. **Risk Distribution Donut:** Cohort segmentation into Low (<40%), Medium (40-60%), and High (>60%) risk categories.\n4. **Risk by Segment & Feature Drivers:** Breakdown of risk across contract types, payment methods, and purchase intervals.\n5. **Customers Requiring Immediate Attention:** High-priority accounts with immediate win-back playbooks."
+      ],
+      "context_set": "dashboard_context"
+    },
+    {
+      "tag": "rfm_explanation",
+      "patterns": [
+        "what is rfm analysis",
+        "explain rfm",
+        "what does rfm stand for",
+        "what is recency frequency monetary",
+        "how is rfm calculated",
+        "recency frequency and monetary value"
+      ],
+      "responses": [
+        "### Understanding RFM Analysis in ChurnGuard 📊\n\n**RFM** is the core behavioral framework used to measure customer engagement and churn propensity:\n\n1. **Recency (R):** Days since the customer's last order. A sudden expansion in reorder interval is the single strongest indicator of defection.\n2. **Frequency (F):** Total lifetime orders placed. Frequent buyers build habitual loyalty and are significantly less likely to churn.\n3. **Monetary (M):** Total cumulative revenue generated. Losing high-monetary customers produces disproportionate revenue loss, making them tier-1 retention targets.\n\n**Derived Behavioral Features:** Average Order Value (AOV = Monetary / Frequency), ordering velocity, and tenure span."
+      ],
+      "context_set": "rfm_context"
+    },
+    {
+      "tag": "high_risk_explanation",
+      "patterns": [
+        "explain high-risk customers",
+        "what does high risk mean",
+        "why is a customer high risk",
+        "high risk threshold",
+        "how do you define high risk"
+      ],
+      "responses": [
+        "### High-Risk Customer Cohort Definition ⚠️\n\nIn ChurnGuard, customers with a **predicted churn probability exceeding 60%** are classified as **High Risk**:\n\n• **Core Behavioral Symptoms:** Order gaps expanding beyond 2.5× their habitual cycle, declining order frequency, and absence of recent platform activity.\n• **Revenue Vulnerability:** High-spend accounts in this tier present imminent revenue leakage.\n• **Recommended SLA:** Immediate intervention within 48 to 72 hours using direct outreach, executive check-ins, or targeted reactivation incentives."
+      ],
+      "context_set": "high_risk_context"
+    },
+    {
+      "tag": "retention_strategies",
+      "patterns": [
+        "how can i reduce customer churn",
+        "how to reduce churn",
+        "retention playbooks",
+        "what retention actions should be considered",
+        "customer retention strategies",
+        "how to retain customers"
+      ],
+      "responses": [
+        "### Prescriptive Churn Reduction Playbooks 💡\n\n**1. High-Risk Accounts (>60% churn probability):**\n• **Proactive Outreach:** Initiate a direct phone or WhatsApp check-in from account management within 48 hours.\n• **Reactivation Incentive:** Deliver a personalized 15–20% discount or complimentary subscription extension valid for 7 days.\n• **Exit Prevention Survey:** Ask: *'How can we make your next order smoother?'*\n\n**2. Medium-Risk Accounts (40–60% churn probability):**\n• **Automated Nudges:** Trigger curated catalog recommendations based on past purchase categories.\n• **Loyalty Reminders:** Notify them of expiring reward points or upcoming member privileges.\n\n**3. Low-Risk Accounts (<40% churn probability):**\n• **Advocacy & Referrals:** Invite to VIP clubs and referral programs."
+      ],
+      "context_set": "retention_context"
+    },
+    {
+      "tag": "prediction_model_explanation",
+      "patterns": [
+        "explain the prediction model",
+        "how does the churn prediction model work",
+        "what ml model do you use",
+        "model accuracy and diagnostics",
+        "explain the algorithm"
+      ],
+      "responses": [
+        "### ChurnGuard Machine Learning Architecture 🧠\n\nChurnGuard utilizes an ensemble of **XGBoost** and **Random Forest** classification models calibrated for customer lifecycle telemetry:\n\n- **Target Metric:** Probability of non-reorder within the next 30/90 days.\n- **Primary Behavioral Inputs:** Recency in days, Lifetime Frequency, Cumulative Monetary spend, Tenure span, and Average Order Value (AOV).\n- **High-Risk Recall (Detection Rate):** `74.8%` — deliberately tuned to minimize false negatives so slipping accounts are flagged before defection.\n- **ROC-AUC Score:** `0.717` with calibrated probability thresholds (<40% Low, 40–60% Medium, >60% High)."
+      ],
+      "context_set": "model_context"
+    },
+    {
+      "tag": "csv_upload_guidance",
+      "patterns": [
+        "what csv format do i need",
+        "how to upload csv",
+        "batch prediction file format",
+        "csv columns",
+        "dataset requirements"
+      ],
+      "responses": [
+        "### CSV Batch Upload Specifications 📁\n\nTo run bulk customer predictions, upload a CSV or XLSX file containing:\n\n1. `CustomerID`: Unique customer/account identifier (e.g., `12345` or `CUST-001`)\n2. `InvoiceDate` / `OrderDate`: Timestamp of transaction (`YYYY-MM-DD` or `YYYY-MM-DD HH:MM:SS`)\n3. `TotalAmount` / `Spend`: Monetary value of order\n4. `Quantity`: Count of items purchased\n\nNavigate to **Data Management** or **Upload Data** to upload files up to 100MB!"
+      ],
+      "context_set": "csv_context"
+    },
+    {
+      "tag": "goodbye",
+      "patterns": [
+        "bye",
+        "goodbye",
+        "see you later",
+        "talk to you later",
+        "exit",
+        "quit"
+      ],
+      "responses": [
+        "Goodbye! I will continue monitoring your customer retention signals in the background. Reach out anytime!",
+        "See you later! Feel free to ask if you need further customer analytics or retention advice.",
+        "Have a great day! ChurnGuard is always here to safeguard your recurring revenue."
+      ],
+      "context_set": ""
+    },
+    {
+      "tag": "gratitude",
+      "patterns": [
+        "thank you",
+        "thanks",
+        "appreciate it",
+        "thanks a lot",
+        "awesome thanks"
+      ],
+      "responses": [
+        "You're very welcome! Let me know if you'd like to dive deeper into any customer cohorts.",
+        "Glad I could help! Proactive retention creates long-term customer loyalty.",
+        "Anytime! I'm here whenever you need churn diagnostics or advice."
+      ],
+      "context_set": ""
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 """
 routes/chat.py - Chatbot API endpoints for ChurnGuard AI.
-Handles message exchange, conversation history, and suggestion chips.
-Supports both authenticated users and public session visitors.
+Handles hybrid message exchange, conversation history, and suggestion chips.
+Supports both POST /api/chat and POST /api/chat/message.
 """
 
 import os
@@ -13,6 +13,7 @@ from chatbot.service import (
     process_chat_message,
     get_user_chat_history,
     clear_user_chat_history,
+    DEFAULT_SUGGESTIONS,
 )
 
 JWT_SECRET = os.getenv("JWT_SECRET", "super-secret-key-change-in-prod")
@@ -21,13 +22,17 @@ router = APIRouter(prefix="/api/chat", tags=["chatbot"])
 
 
 class ChatMessageRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=1500)
+    message: Optional[str] = Field(None, max_length=1500)
+    prompt: Optional[str] = Field(None, max_length=1500)
     session_id: Optional[str] = Field(None, max_length=100)
+    conversation_id: Optional[str] = Field(None, max_length=100)
+    context: Optional[Dict[str, Any]] = None
 
 
 class ChatMessageResponse(BaseModel):
     reply: str
     intent: str
+    layer: Optional[str] = None
     sources: List[str]
     suggestions: List[str]
     metrics_context: Dict[str, Any]
@@ -50,17 +55,26 @@ def get_optional_user_email(request: Request) -> Optional[str]:
         return None
 
 
+@router.post("", response_model=ChatMessageResponse)
+@router.post("/", response_model=ChatMessageResponse)
 @router.post("/message", response_model=ChatMessageResponse)
-async def send_message(req: ChatMessageRequest, request: Request):
+async def chat_endpoint(req: ChatMessageRequest, request: Request):
     """
-    Submit a message to ChurnGuard AI and receive an intelligent, grounded response.
+    Primary hybrid chat endpoint supporting POST /api/chat and POST /api/chat/message.
     """
+    text = (req.message or req.prompt or "").strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="Message content cannot be empty.")
+
+    sid = req.session_id or req.conversation_id or "default_session"
     user_email = get_optional_user_email(request)
+
     try:
         result = process_chat_message(
-            message=req.message,
+            message=text,
             user_email=user_email,
-            session_id=req.session_id,
+            session_id=sid,
+            context=req.context,
         )
         return result
     except Exception as e:
@@ -96,35 +110,4 @@ async def get_suggestions(request: Request):
     """
     Get initial prompt suggestion chips.
     """
-    user_email = get_optional_user_email(request)
-    if user_email:
-        return {
-            "suggestions": [
-                "🔍 How many customers are at high risk in my dataset?",
-                "📊 Explain RFM scoring methodology",
-                "💡 What retention playbook works best for high-risk accounts?",
-                "🧠 What is ChurnGuard's ML model accuracy?",
-            ]
-        }
-    return {
-        "suggestions": [
-            "✦ What is ChurnGuard and how does it predict churn?",
-            "📊 How does RFM behavioral analysis work?",
-            "💡 What retention playbooks are recommended?",
-            "📁 What CSV format do I need for bulk predictions?",
-        ]
-    }
-
-
-@router.get("/health")
-def chatbot_health():
-    """
-    Chatbot service diagnostic health check.
-    """
-    api_key_configured = bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
-    return {
-        "status": "online",
-        "gemini_api_configured": api_key_configured,
-        "engine": "Gemini 1.5 Flash + Deterministic Domain RAG Engine",
-        "rag_knowledge_base": "Active",
-    }
+    return {"suggestions": DEFAULT_SUGGESTIONS}

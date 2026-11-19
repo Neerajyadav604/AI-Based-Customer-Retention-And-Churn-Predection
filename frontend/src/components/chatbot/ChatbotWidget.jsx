@@ -12,10 +12,12 @@ export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([])
   const [suggestions, setSuggestions] = useState([
-    '🔍 How many customers are at high risk?',
-    '📊 Explain RFM scoring methodology',
-    '💡 What retention playbooks are recommended?',
-    '📁 What CSV format do I need for bulk predictions?',
+    'Explain my churn dashboard.',
+    'What is RFM analysis?',
+    'Which customers are most likely to churn?',
+    'Explain high-risk customers.',
+    'How can I reduce customer churn?',
+    'Explain the prediction model.',
   ])
   const [isLoading, setIsLoading] = useState(false)
 
