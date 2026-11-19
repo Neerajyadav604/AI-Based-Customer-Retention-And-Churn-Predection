@@ -33,9 +33,18 @@ from routes.chat import router as chat_router
 load_dotenv(Path(__file__).parent / ".env")
 
 MAX_FILE_MB = 100
-frontend_url = os.getenv("FRONTEND_URL")
-if not frontend_url:
-    raise RuntimeError("FRONTEND_URL is not configured.")
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+cors_origins = [
+    frontend_url,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+cors_origins = list(dict.fromkeys(filter(None, cors_origins)))
 
 deployment = (
     "render"
@@ -54,7 +63,9 @@ app = FastAPI(title="Churn Prediction API")
 init_db()   # make sure the SQLite tables exist
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url],
+    allow_origins=cors_origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-API-Deployment"],
