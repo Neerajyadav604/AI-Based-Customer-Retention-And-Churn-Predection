@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 
 export default function FloatingRobot({ onClick, isOpen }) {
   const [isHovered, setIsHovered] = useState(false)
-  const [isEntering, setIsEntering] = useState(true)
+  const [isWhirling, setIsWhirling] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   
-  // Custom position state if dragged; otherwise null uses default bottom-right anchoring
+  // Custom position state if manually dragged; null preserves default bottom-right anchoring
   const [coords, setCoords] = useState(null)
   
   const dragRef = useRef({
@@ -19,17 +19,32 @@ export default function FloatingRobot({ onClick, isOpen }) {
 
   const containerRef = useRef(null)
 
-  // Initial Entrance: Float across the screen on load and then stabilize smoothly
+  // 1. Initial 360-degree whirl animation on mount
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsEntering(false)
-    }, 2100)
+      setIsWhirling(false)
+    }, 1200)
     return () => clearTimeout(timer)
   }, [])
 
-  // Dragging handlers (Mouse & Touch)
+  // Keep manually dragged position within viewport if window is resized
+  useEffect(() => {
+    function handleResize() {
+      setCoords((prev) => {
+        if (!prev) return null
+        return {
+          x: Math.max(16, Math.min(window.innerWidth - 88, prev.x)),
+          y: Math.max(16, Math.min(window.innerHeight - 88, prev.y)),
+        }
+      })
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // 2. Drag Interaction Handlers (Mouse & Touch)
   const handlePointerDown = useCallback((e) => {
-    // Left click or touch only
+    // Left mouse click or touch only
     if (e.button && e.button !== 0) return
 
     const clientX = e.touches ? e.touches[0].clientX : e.clientX
@@ -64,9 +79,10 @@ export default function FloatingRobot({ onClick, isOpen }) {
         dragRef.current.hasMoved = true
       }
 
-      // Constrain within viewport boundaries
-      const newX = Math.max(12, Math.min(window.innerWidth - 84, dragRef.current.elemX + deltaX))
-      const newY = Math.max(12, Math.min(window.innerHeight - 84, dragRef.current.elemY + deltaY))
+      // Constrain strictly within the visible viewport bounds
+      const robotSize = 80
+      const newX = Math.max(16, Math.min(window.innerWidth - robotSize - 16, dragRef.current.elemX + deltaX))
+      const newY = Math.max(16, Math.min(window.innerHeight - robotSize - 16, dragRef.current.elemY + deltaY))
 
       setCoords({ x: newX, y: newY })
     }
@@ -78,7 +94,7 @@ export default function FloatingRobot({ onClick, isOpen }) {
       dragRef.current.active = false
       setIsDragging(false)
 
-      // If user simply clicked without dragging, trigger open
+      // Only trigger chatbot if it was a click, NOT a drag
       if (!wasDrag) {
         onClick()
       }
@@ -102,7 +118,7 @@ export default function FloatingRobot({ onClick, isOpen }) {
   // When chatbot panel is open, hide the floating robot trigger so it does not overlap
   if (isOpen) return null
 
-  // Determine speech badge position (left or right of robot depending on screen coordinates)
+  // Determine speech badge position (flips left or right based on viewport side)
   const isRightSide = !coords || coords.x > window.innerWidth / 2
 
   const containerStyle = coords
@@ -122,9 +138,7 @@ export default function FloatingRobot({ onClick, isOpen }) {
         coords ? '' : 'fixed bottom-6 right-6 z-50'
       } flex items-center select-none ${
         isRightSide ? 'flex-row-reverse' : 'flex-row'
-      } gap-3 pointer-events-auto transition-transform ${
-        isEntering ? 'animate-robot-entrance' : ''
-      }`}
+      } gap-3 pointer-events-auto`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -148,7 +162,13 @@ export default function FloatingRobot({ onClick, isOpen }) {
             isDragging
               ? 'cursor-grabbing scale-110 rotate-6 shadow-2xl'
               : 'cursor-grab hover:scale-105 active:scale-95'
-          } focus:outline-none ${!isDragging && !isEntering ? 'animate-robot-float' : ''}`}
+          } focus:outline-none ${
+            isWhirling
+              ? 'animate-robot-whirl'
+              : !isDragging
+              ? 'animate-robot-float'
+              : ''
+          }`}
         >
           {/* Soft Ambient Gold Aura Glow */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#E6B95F]/45 via-[#F4D3B5]/30 to-transparent blur-md group-hover:blur-lg animate-robot-glow transition-all" />
