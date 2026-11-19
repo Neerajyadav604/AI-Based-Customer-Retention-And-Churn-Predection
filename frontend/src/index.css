@@ -297,22 +297,38 @@ input:focus, select:focus, textarea:focus {
   transform-origin: center;
 }
 
-/* Robot 360-Degree Whirl Animation */
-@keyframes robot-whirl {
+/* Smooth Circular / Spiral Trajectory Across Landing Page (Upright Orientation) */
+@keyframes robot-swirl-trajectory {
   0% {
-    transform: rotate(0deg) scale(0.4);
+    transform: translate(-36vw, -34vh) scale(0.7);
     opacity: 0;
   }
-  65% {
-    transform: rotate(360deg) scale(1.08);
+  15% {
+    transform: translate(-46vw, -16vh) scale(0.85);
+    opacity: 1;
+  }
+  35% {
+    transform: translate(-30vw, 12vh) scale(0.96);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(4vw, 5vh) scale(1.04);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(-8vw, -10vh) scale(1.02);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(2vw, -2vh) scale(1.01);
     opacity: 1;
   }
   100% {
-    transform: rotate(360deg) scale(1);
+    transform: translate(0, 0) scale(1);
     opacity: 1;
   }
 }
 
-.animate-robot-whirl {
-  animation: robot-whirl 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.animate-robot-swirl {
+  animation: robot-swirl-trajectory 2.8s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
 }

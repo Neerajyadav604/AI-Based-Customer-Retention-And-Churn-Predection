@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 
 export default function FloatingRobot({ onClick, isOpen }) {
   const [isHovered, setIsHovered] = useState(false)
-  const [isWhirling, setIsWhirling] = useState(true)
+  const [isSwirling, setIsSwirling] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   
   // Custom position state if manually dragged; null preserves default bottom-right anchoring
@@ -19,11 +19,11 @@ export default function FloatingRobot({ onClick, isOpen }) {
 
   const containerRef = useRef(null)
 
-  // 1. Initial 360-degree whirl animation on mount
+  // 1. Initial smooth circular/spiral trajectory across the landing page (settles after 2.8s)
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsWhirling(false)
-    }, 1200)
+      setIsSwirling(false)
+    }, 2800)
     return () => clearTimeout(timer)
   }, [])
 
@@ -79,7 +79,7 @@ export default function FloatingRobot({ onClick, isOpen }) {
         dragRef.current.hasMoved = true
       }
 
-      // Constrain strictly within the visible viewport bounds
+      // Constrain strictly within visible viewport bounds
       const robotSize = 80
       const newX = Math.max(16, Math.min(window.innerWidth - robotSize - 16, dragRef.current.elemX + deltaX))
       const newY = Math.max(16, Math.min(window.innerHeight - robotSize - 16, dragRef.current.elemY + deltaY))
@@ -94,7 +94,7 @@ export default function FloatingRobot({ onClick, isOpen }) {
       dragRef.current.active = false
       setIsDragging(false)
 
-      // Only trigger chatbot if it was a click, NOT a drag
+      // Only trigger chatbot if it was a genuine click, NOT a drag
       if (!wasDrag) {
         onClick()
       }
@@ -138,7 +138,9 @@ export default function FloatingRobot({ onClick, isOpen }) {
         coords ? '' : 'fixed bottom-6 right-6 z-50'
       } flex items-center select-none ${
         isRightSide ? 'flex-row-reverse' : 'flex-row'
-      } gap-3 pointer-events-auto`}
+      } gap-3 pointer-events-auto ${
+        isSwirling ? 'animate-robot-swirl' : ''
+      }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -160,14 +162,10 @@ export default function FloatingRobot({ onClick, isOpen }) {
           title="Drag anywhere on screen or click to chat"
           className={`group relative flex size-16 sm:size-18 items-center justify-center rounded-full p-1 transition-transform duration-200 ${
             isDragging
-              ? 'cursor-grabbing scale-110 rotate-6 shadow-2xl'
+              ? 'cursor-grabbing scale-110 shadow-2xl'
               : 'cursor-grab hover:scale-105 active:scale-95'
           } focus:outline-none ${
-            isWhirling
-              ? 'animate-robot-whirl'
-              : !isDragging
-              ? 'animate-robot-float'
-              : ''
+            !isDragging && !isSwirling ? 'animate-robot-float' : ''
           }`}
         >
           {/* Soft Ambient Gold Aura Glow */}
@@ -270,8 +268,8 @@ export default function FloatingRobot({ onClick, isOpen }) {
         </div>
       </div>
 
-      {/* Interactive Speech Prompt Badge */}
-      {!isDragging && (
+      {/* Interactive Speech Prompt Badge - Fades in once swirl is complete */}
+      {!isDragging && !isSwirling && (
         <div
           onClick={onClick}
           className={`cursor-pointer transition-all duration-300 transform ${
