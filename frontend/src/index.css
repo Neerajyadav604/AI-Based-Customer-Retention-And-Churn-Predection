@@ -237,3 +237,62 @@ input:focus, select:focus, textarea:focus {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-4px) rotate(6deg); }
 }
+
+/* Floating AI Robot Physics & Lighting */
+@keyframes robot-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+@keyframes robot-shadow-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(0.7);
+    opacity: 0.15;
+  }
+}
+
+@keyframes robot-glow-pulse {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes robot-eye-blink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.12);
+  }
+}
+
+.animate-robot-float {
+  animation: robot-float 3.2s ease-in-out infinite;
+}
+
+.animate-robot-shadow {
+  animation: robot-shadow-pulse 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.animate-robot-glow {
+  animation: robot-glow-pulse 2.8s ease-in-out infinite;
+}
+
+.animate-robot-blink {
+  animation: robot-eye-blink 4.2s infinite;
+  transform-origin: center;
+}

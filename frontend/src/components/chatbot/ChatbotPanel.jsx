@@ -11,6 +11,7 @@ export default function ChatbotPanel({
   isLoading,
 }) {
   const [inputText, setInputText] = useState('')
+  const [isMaximized, setIsMaximized] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -107,7 +108,11 @@ export default function ChatbotPanel({
 
   return (
     <div
-      className="fixed bottom-24 right-4 sm:right-6 z-50 flex flex-col w-[92vw] sm:w-[420px] h-[580px] max-h-[82vh] overflow-hidden rounded-3xl border-2 border-[#EBC69F] bg-[#FFF8ED] shadow-[0_24px_65px_-12px_rgba(41,28,46,0.35)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-5 duration-300"
+      className={`fixed z-50 flex flex-col overflow-hidden rounded-3xl border-2 border-[#EBC69F] bg-[#FFF8ED] shadow-[0_24px_65px_-12px_rgba(41,28,46,0.38)] backdrop-blur-xl transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-5 ${
+        isMaximized
+          ? 'bottom-4 sm:bottom-6 right-2 sm:right-6 md:right-8 w-[96vw] sm:w-[860px] md:w-[940px] lg:w-[1040px] h-[88vh] max-h-[92vh]'
+          : 'bottom-6 right-3 sm:right-6 w-[92vw] sm:w-[440px] h-[600px] max-h-[84vh]'
+      }`}
       role="dialog"
       aria-label="ChurnGuard AI Chatbot Assistant"
     >
@@ -141,7 +146,7 @@ export default function ChatbotPanel({
           </div>
         </div>
 
-        {/* Controls: Clear, Minimize, Close */}
+        {/* Controls: Clear, Maximize/Restore, Minimize, Close */}
         <div className="flex items-center gap-1 text-[#F4D3B5]">
           <button
             type="button"
@@ -153,6 +158,26 @@ export default function ChatbotPanel({
               <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
             </svg>
           </button>
+          
+          {/* Maximize / Restore Button */}
+          <button
+            type="button"
+            onClick={() => setIsMaximized((prev) => !prev)}
+            title={isMaximized ? "Restore window size" : "Maximize window"}
+            className="flex size-7 items-center justify-center rounded-lg hover:bg-white/10 hover:text-[#FFF3E4] transition"
+          >
+            {isMaximized ? (
+              <svg viewBox="0 0 24 24" fill="none" className="size-3.5 stroke-current stroke-2">
+                <rect x="4" y="8" width="12" height="12" rx="2" />
+                <path d="M8 4h10a2 2 0 012 2v10" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" className="size-3.5 stroke-current stroke-2">
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+              </svg>
+            )}
+          </button>
+
           <button
             type="button"
             onClick={onMinimize}

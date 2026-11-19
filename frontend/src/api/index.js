@@ -1,10 +1,16 @@
 // Build one API URL and send the request.
 export async function request(path, options = {}) {
-  const baseUrl = import.meta.env.VITE_API_URL
-  if (!baseUrl) {
-    throw new Error('VITE_API_URL is not configured.')
+  let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+  // Align local hostname with current browser host to prevent CORS preflight mismatch
+  if (typeof window !== 'undefined' && window.location) {
+    if (window.location.hostname === '127.0.0.1' && baseUrl.includes('localhost')) {
+      baseUrl = baseUrl.replace('localhost', '127.0.0.1')
+    } else if (window.location.hostname === 'localhost' && baseUrl.includes('127.0.0.1')) {
+      baseUrl = baseUrl.replace('127.0.0.1', 'localhost')
+    }
   }
-  console.info(`[API BASE URL] ${baseUrl}`)
+
   const token = localStorage.getItem('access_token')
   const { responseType, skipAuthRedirect, ...fetchOptions } = options
   const headers = new Headers(fetchOptions.headers || {})
