@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { getUploadHistory, getUploadDetails, downloadUploadResults } from '../api'
 import ErrorMessage from '../components/ErrorMessage'
 import Spinner from '../components/Spinner'
@@ -454,13 +455,22 @@ export default function History() {
 
               <div className="flex items-center gap-2">
                 {uploadDetail?.status === 'Completed' && (
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(uploadDetail.id, uploadDetail.file_name)}
-                    className="rounded-xl bg-[#494269] px-3.5 py-1.5 text-xs font-semibold text-[#FFF3E4] hover:bg-[#373152] transition"
-                  >
-                    Export Excel 📥
-                  </button>
+                  <>
+                    <Link
+                      to={`/retention-intelligence?upload_id=${uploadDetail.id}`}
+                      className="rounded-xl border border-[#E6B95F] bg-[#FAF2DF] px-3.5 py-1.5 text-xs font-bold text-[#8C6819] hover:bg-[#EBC69F] transition flex items-center gap-1.5"
+                    >
+                      <span>🎯 Retention Insights</span>
+                      <span>→</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(uploadDetail.id, uploadDetail.file_name)}
+                      className="rounded-xl bg-[#494269] px-3.5 py-1.5 text-xs font-semibold text-[#FFF3E4] hover:bg-[#373152] transition"
+                    >
+                      Export Excel 📥
+                    </button>
+                  </>
                 )}
                 <button
                   type="button"

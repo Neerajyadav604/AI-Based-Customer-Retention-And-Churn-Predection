@@ -559,3 +559,29 @@ def get_history_run(user_email, run_id):
     except Exception as e:
         print("get_history_run fallback:", type(e).__name__, e)
         return None
+
+def get_customer_by_id(customer_id, user_email=None):
+    """Retrieve individual customer profile from latest upload records."""
+    try:
+        with DBContext() as db:
+            query = (
+                "SELECT c.customer_id, c.recency_days, c.frequency, c.monetary, c.tenure_days, "
+                "c.total_items, c.avg_order_value, c.churn_probability, c.risk_level, c.upload_id "
+                "FROM upload_customers c "
+                "JOIN uploads u ON c.upload_id = u.id "
+                "WHERE (c.customer_id = %s OR c.customer_id = %s) "
+            )
+            params = [str(customer_id), str(customer_id).replace("cust-", "").replace("CUST-", "")]
+            if user_email:
+                query += " AND u.user_email = %s "
+                params.append(user_email)
+            query += " ORDER BY u.created_at DESC LIMIT 1"
+            cursor = db.execute(query, tuple(params))
+            row = cursor.fetchone()
+            if row:
+                return dict(row)
+            return None
+    except Exception as e:
+        print("get_customer_by_id fallback:", type(e).__name__, e)
+        return None
+

@@ -1,3 +1,4 @@
+from typing import Optional, List
 from pydantic import BaseModel, Field
 
 # What the API accepts for one customer
@@ -37,4 +38,8 @@ class BatchSummary(BaseModel):
 # The full batch response
 class BatchOutput(BaseModel):
     summary: BatchSummary
-    customers: list[BatchCustomer]    
+    customers: list[BatchCustomer]
+    upload_id: Optional[int] = None
+    dataset_id: Optional[str] = None
+    filename: Optional[str] = None
+    

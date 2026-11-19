@@ -29,6 +29,7 @@ from plans import check_access, use_trial
 from routes.payment import router as payment_router
 from routes.onboarding import router as onboarding_router
 from routes.chat import router as chat_router
+from routes.retention import router as retention_router
 
 load_dotenv(Path(__file__).parent / ".env")
 
@@ -90,6 +91,7 @@ app.include_router(photo_router)
 app.include_router(payment_router)
 app.include_router(onboarding_router)
 app.include_router(chat_router)
+app.include_router(retention_router)
 
 @app.get("/health")
 def health():
@@ -186,6 +188,7 @@ async def predict_batch_csv(file: UploadFile = File(...), user=Depends(current_u
         "medium": int(counts.get("Medium", 0)),
         "low": int(counts.get("Low", 0)),
     }
+    upload_id = None
     try:
         upload_id = save_upload(
             user["email"], summary, customers, file_name=filename,
@@ -198,7 +201,13 @@ async def predict_batch_csv(file: UploadFile = File(...), user=Depends(current_u
         save_orders(upload_id, user["email"], orders)
     except Exception as e:
         print("Could not save upload:", type(e).__name__, e)
-    return {"summary": summary, "customers": customers}
+    return {
+        "summary": summary,
+        "customers": customers,
+        "upload_id": upload_id,
+        "dataset_id": str(upload_id) if upload_id else None,
+        "filename": filename,
+    }
 
 
 @app.get("/model/insights")

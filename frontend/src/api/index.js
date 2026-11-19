@@ -293,3 +293,28 @@ export function getChatSuggestions() {
     skipAuthRedirect: true,
   })
 }
+
+// ==========================================
+// RETENTION INTELLIGENCE API
+// ==========================================
+
+export function getRetentionAnalysis(uploadId) {
+  return request(`/api/retention/analysis/${uploadId}`)
+}
+
+export function getLatestRetentionAnalysis() {
+  return request('/api/retention/latest')
+}
+
+export function getCustomerRetention(customerId) {
+  return request(`/api/retention/customer/${encodeURIComponent(customerId)}`)
+}
+
+export function updateCustomerAction(customerId, actionId, status, notes = '') {
+  return request(`/api/retention/actions/${encodeURIComponent(customerId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action_id: actionId, status, notes }),
+  })
+}
+

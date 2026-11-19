@@ -26,6 +26,7 @@ import Privacy from './pages/Privacy'
 import Predictions from './pages/Predictions'
 import AuthCallback from './pages/AuthCallback'
 import VerifyEmail from './pages/VerifyEmail'
+import RetentionIntelligence from './pages/RetentionIntelligence'
 import ChatbotWidget from './components/chatbot/ChatbotWidget'
 
 // Define all public and application routes.
@@ -56,6 +57,13 @@ function RouteMap() {
         <Route path="recommendations" element={<Recommendations />} />
         <Route path="profile" element={<Profile />} />
         <Route path="admin" element={<Admin />} />
+        <Route path="retention-intelligence" element={<RetentionIntelligence />} />
+      </Route>
+      <Route
+        path="/retention-intelligence"
+        element={<ProtectedRoute><WorkspaceLayout /></ProtectedRoute>}
+      >
+        <Route index element={<RetentionIntelligence />} />
       </Route>
       <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />

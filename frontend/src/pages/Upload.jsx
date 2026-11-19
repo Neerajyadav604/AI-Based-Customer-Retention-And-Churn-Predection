@@ -10,6 +10,7 @@ import SummaryCards from '../components/SummaryCards'
 import Card from '../components/Card'
 import Spinner from '../components/Spinner'
 import { DoodleSparkle } from '../components/Doodles'
+import FloatingRetentionWidget from '../components/retention/FloatingRetentionWidget'
 
 const requiredColumns = ['customer_id', 'order_id', 'order_date', 'quantity', 'unit_price']
 const maxFileSize = 100 * 1024 * 1024
@@ -38,6 +39,7 @@ export default function Upload() {
   const [dragging, setDragging] = useState(false)
   const [summary, setSummary] = useState(null)
   const [customers, setCustomers] = useState([])
+  const [retentionDataset, setRetentionDataset] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -76,6 +78,22 @@ export default function Upload() {
       setSummary(data.summary || data)
       setCustomers(data.customers || [])
       refreshPlan?.()
+
+      // Associate with latest successfully processed dataset & trigger floating widget
+      const datasetMeta = {
+        uploadId: data.upload_id,
+        datasetId: data.dataset_id || (data.upload_id ? String(data.upload_id) : null),
+        filename: data.filename || file.name,
+        summary: data.summary || data,
+        customers: data.customers || [],
+        timestamp: Date.now(),
+      }
+      setRetentionDataset(datasetMeta)
+      try {
+        sessionStorage.setItem('churnguard_latest_retention_dataset', JSON.stringify(datasetMeta))
+      } catch (e) {
+        console.warn('Could not cache retention dataset:', e)
+      }
     } catch (err) {
       if (err.status === 403) {
         setLimitMessage(err.message || 'Trial limits exceeded. Please upgrade.')
@@ -192,6 +210,12 @@ export default function Upload() {
           <ResultsTable customers={customers} />
         </div>
       )}
+
+      {/* Floating Retention Intelligence Contextual Entry Point */}
+      <FloatingRetentionWidget
+        dataset={retentionDataset}
+        onClose={() => setRetentionDataset(null)}
+      />
     </div>
   )
 }
