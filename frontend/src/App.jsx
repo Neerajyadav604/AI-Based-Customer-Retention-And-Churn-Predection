@@ -10,6 +10,7 @@ import Contact from './pages/Contact'
 import Docs from './pages/Docs'
 import Dashboard from './pages/Dashboard'
 import History from './pages/History'
+import DataManagement from './pages/DataManagement'
 import Home from './pages/Home'
 import ModelInsights from './pages/ModelInsights'
 import Login from './pages/Login'
@@ -25,6 +26,7 @@ import Privacy from './pages/Privacy'
 import Predictions from './pages/Predictions'
 import AuthCallback from './pages/AuthCallback'
 import VerifyEmail from './pages/VerifyEmail'
+import ChatbotWidget from './components/chatbot/ChatbotWidget'
 
 // Define all public and application routes.
 function RouteMap() {
@@ -48,6 +50,7 @@ function RouteMap() {
         <Route path="predict" element={<Predict />} />
         <Route path="upload" element={<Upload />} />
         <Route path="insights" element={<ModelInsights />} />
+        <Route path="data" element={<DataManagement />} />
         <Route path="history" element={<History />} />
         <Route path="predictions" element={<Predictions />} />
         <Route path="recommendations" element={<Recommendations />} />
@@ -67,6 +70,7 @@ export default function App() {
       <AuthProvider>
         <PlanProvider>
           <RouteMap />
+          <ChatbotWidget />
         </PlanProvider>
       </AuthProvider>
     </BrowserRouter>

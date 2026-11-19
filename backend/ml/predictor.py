@@ -11,9 +11,9 @@ model_name = saved.get("model_name", "Logistic Regression")
 
 # Turn a probability into a risk label
 def risk_level(p):
-    if p >= 0.6:
+    if p > 0.6:
         return "High"
-    if p >= 0.4:
+    if p > 0.3:
         return "Medium"
     return "Low"
 

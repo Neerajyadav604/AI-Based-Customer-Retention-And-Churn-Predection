@@ -3,12 +3,12 @@ from fastapi import HTTPException
 from mongo import users
 
 # During a trial, one upload may have at most this many customers.
-TRIAL_MAX_ROWS = 100
+TRIAL_MAX_ROWS = 50000
 
 # Paid plans: max customers per upload.
 PLAN_LIMITS = {
-    "pro": 5000,
-    "business": 50000,
+    "pro": 100000,
+    "business": 500000,
 }
 
 # Prices in paise (Razorpay uses paise, not rupees).

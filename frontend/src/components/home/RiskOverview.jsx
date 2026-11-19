@@ -1,41 +1,68 @@
-// Show the risk analysis section with clearly labelled sample data.
-const rows = [
-  ['High', 'Customers who need attention soon', 'bg-red-500'],
-  ['Medium', 'Customers to check after their usual gap', 'bg-amber-500'],
-  ['Low', 'Customers showing steady buying behaviour', 'bg-green-500'],
+import { DoodleSparkle } from '../Doodles'
+
+const cohorts = [
+  { level: 'High Risk', count: '92', pct: 30, desc: 'Immediate intervention needed. Order frequency dropped > 50%.', col: 'bg-[#B83838]' },
+  { level: 'Medium Risk', count: '82', pct: 27, desc: 'Approaching usual order cycle deadline. Early nurture advised.', col: 'bg-[#E6B95F]' },
+  { level: 'Low Risk', count: '126', pct: 43, desc: 'Healthy, stable reordering velocity with consistent basket size.', col: 'bg-[#43823C]' },
 ]
 
 export default function RiskOverview() {
   return (
-    <section className="grid items-center gap-10 md:grid-cols-2">
+    <div className="grid items-center gap-12 lg:grid-cols-2">
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-600">Customer risk overview</p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">Turn order history into a clear follow-up list.</h2>
-        <p className="mt-4 text-sm leading-6 text-slate-600">ChurnGuard groups customers into simple risk levels so a small shop owner can decide who to contact first.</p>
-        <ul className="mt-6 space-y-3 text-sm text-slate-700">
-          {['Filter results by High, Medium or Low risk', 'See the customer signals used for a prediction', 'Download results and keep upload history'].map((text) => (
-            <li key={text} className="flex gap-2"><span className="text-indigo-600">✓</span>{text}</li>
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#EBC69F] bg-[#FFF8ED] px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-[#291C2E] mb-3">
+          <DoodleSparkle size={14} className="text-[#E6B95F]" />
+          <span>Customer Risk Telemetry</span>
+        </div>
+        <h2 className="font-editorial text-3xl font-bold tracking-tight text-[#291C2E] sm:text-4xl">
+          Turn scattered order histories into prioritized follow-ups.
+        </h2>
+        <p className="mt-4 text-base leading-relaxed text-[#392D35]">
+          Rather than treating all customers uniformly, ChurnGuard segregates your accounts based on mathematical defection probability so you know where your marketing rupees yield highest return.
+        </p>
+
+        <ul className="mt-8 space-y-4 text-sm text-[#291C2E]">
+          {[
+            'Instant cohort filtering across High, Medium, and Low risk bands',
+            'Feature attribution explaining exactly which factors drive individual churn',
+            'Full upload run histories with exportable CSVs for WhatsApp or email flows',
+          ].map((text) => (
+            <li key={text} className="flex items-center gap-3">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#E6B95F] text-[#291C2E] text-xs font-bold">
+                ✓
+              </span>
+              <span>{text}</span>
+            </li>
           ))}
         </ul>
       </div>
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_12px_30px_rgba(70,60,150,0.08)]">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <p className="text-sm font-semibold text-slate-900">Risk distribution</p>
-          <span className="rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-medium text-indigo-700">Sample data</span>
+
+      <div className="rounded-3xl border-2 border-[#EBC69F] bg-white p-7 shadow-[0_12px_40px_rgba(73,66,105,0.08)]">
+        <div className="flex items-center justify-between border-b border-[#EBC69F]/50 pb-4">
+          <div>
+            <p className="font-editorial text-lg font-bold text-[#291C2E]">Risk Distribution Analysis</p>
+            <p className="text-xs text-[#392D35]">300 Evaluated Accounts Sample</p>
+          </div>
+          <span className="rounded-full bg-[#FFF8ED] px-3 py-1 text-xs font-semibold text-[#291C2E] border border-[#EBC69F]">
+            Interactive Cohort
+          </span>
         </div>
-        <div className="mt-5 space-y-5">
-          {rows.map(([level, text, colour], index) => (
-            <div key={level}>
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700">{level}</span>
-                <span className="text-slate-400">{index === 0 ? '92' : index === 1 ? '82' : '126'} customers</span>
+
+        <div className="mt-6 space-y-6">
+          {cohorts.map((c) => (
+            <div key={c.level} className="space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-[#291C2E]">{c.level}</span>
+                <span className="font-mono text-[#373152]">{c.count} accounts ({c.pct}%)</span>
               </div>
-              <div className="mt-2 h-2 rounded-full bg-slate-100"><div className={`h-2 rounded-full ${colour}`} style={{ width: `${[73, 65, 100][index]}%` }} /></div>
-              <p className="mt-1 text-[11px] text-slate-500">{text}</p>
+              <div className="h-3 w-full rounded-full bg-[#FFF8ED] overflow-hidden">
+                <div className={`h-full rounded-full ${c.col}`} style={{ width: `${c.pct * 2}%` }} />
+              </div>
+              <p className="text-[11px] text-[#392D35]">{c.desc}</p>
             </div>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   )
 }

@@ -14,6 +14,9 @@ from db import (
     get_history_run,
     get_latest_predictions,
     get_history,
+    get_upload_history,
+    get_upload_details,
+    record_failed_upload,
     get_latest_stats,
     init_db,
     save_history,
@@ -25,10 +28,11 @@ from photo import router as photo_router
 from plans import check_access, use_trial
 from routes.payment import router as payment_router
 from routes.onboarding import router as onboarding_router
+from routes.chat import router as chat_router
 
 load_dotenv(Path(__file__).parent / ".env")
 
-MAX_FILE_MB = 10
+MAX_FILE_MB = 100
 frontend_url = os.getenv("FRONTEND_URL")
 if not frontend_url:
     raise RuntimeError("FRONTEND_URL is not configured.")
@@ -74,6 +78,7 @@ app.include_router(auth_router)
 app.include_router(photo_router)
 app.include_router(payment_router)
 app.include_router(onboarding_router)
+app.include_router(chat_router)
 
 @app.get("/health")
 def health():
@@ -111,24 +116,36 @@ def predict(customer: CustomerInput, user=Depends(current_user)):
 # Upload a CSV of orders and get a churn prediction for every customer
 @app.post("/predict/batch", response_model=BatchOutput)
 async def predict_batch_csv(file: UploadFile = File(...), user=Depends(current_user)):
+    filename = file.filename or "uploaded_orders.csv"
+
     # Basic file checks
-    if not file.filename.lower().endswith(".csv"):
+    if not filename.lower().endswith(".csv"):
+        record_failed_upload(user["email"], filename, "Please upload a .csv file", 0, 0)
         raise HTTPException(status_code=400, detail="Please upload a .csv file")
+
     content = await file.read()
     if len(content) > MAX_FILE_MB * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File is larger than 10 MB")
+        record_failed_upload(user["email"], filename, f"File is larger than {MAX_FILE_MB} MB", 0, 0)
+        raise HTTPException(status_code=400, detail=f"File is larger than {MAX_FILE_MB} MB")
 
     # Read the CSV
     try:
         orders = pd.read_csv(io.BytesIO(content))
-    except Exception:
+    except Exception as e:
+        record_failed_upload(user["email"], filename, f"Could not read this file as a UTF-8 CSV: {str(e)}", 0, 0)
         raise HTTPException(status_code=400, detail="Could not read this file as a UTF-8 CSV")
+
+    total_records = len(orders)
 
     # Build features (raises a clear error if columns or rows are wrong)
     try:
         features = build_customer_features(orders)
     except ValueError as e:
+        record_failed_upload(user["email"], filename, str(e), total_records, total_records)
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        record_failed_upload(user["email"], filename, f"Feature extraction error: {str(e)}", total_records, total_records)
+        raise HTTPException(status_code=400, detail=f"Feature extraction error: {str(e)}")
 
     # Check trial / paid limits using customer count, then predict
     check_access(user, rows=len(features))
@@ -160,12 +177,16 @@ async def predict_batch_csv(file: UploadFile = File(...), user=Depends(current_u
     }
     try:
         upload_id = save_upload(
-            user["email"], summary, customers, file_name=file.filename,
+            user["email"], summary, customers, file_name=filename,
             threshold_used=threshold, model_name=model_name,
+            total_records=total_records,
+            processed_records=total_records,
+            failed_records=0,
+            status="Completed",
         )
         save_orders(upload_id, user["email"], orders)
     except Exception as e:
-        print("Could not save upload:", type(e).__name__)
+        print("Could not save upload:", type(e).__name__, e)
     return {"summary": summary, "customers": customers}
 
 
@@ -175,16 +196,69 @@ def model_insights():
 
 @app.get("/stats")
 def stats(user=Depends(current_user)):
-    return get_latest_stats(user["email"])
+    try:
+        return get_latest_stats(user["email"])
+    except Exception as e:
+        print("Error fetching stats:", type(e).__name__, e)
+        return {"total_customers": 0, "high": 0, "medium": 0, "low": 0, "avg_probability": 0, "last_upload_at": None, "top_customers": []}
 
 @app.get("/history")
 def history(user=Depends(current_user)):
-    return get_history(user["email"])
+    try:
+        return get_history(user["email"])
+    except Exception as e:
+        print("Error fetching history:", type(e).__name__, e)
+        return []
 
+@app.get("/uploads")
+@app.get("/upload/history")
+def list_uploads(user=Depends(current_user)):
+    try:
+        return get_upload_history(user["email"])
+    except Exception as e:
+        print("Error fetching upload history:", type(e).__name__, e)
+        return []
+
+@app.get("/uploads/{upload_id}")
+@app.get("/upload/history/{upload_id}")
+def get_upload(upload_id: int, user=Depends(current_user)):
+    try:
+        details = get_upload_details(user["email"], upload_id)
+        if details is None:
+            raise HTTPException(status_code=404, detail="Upload record not found")
+        return details
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("Error fetching upload details:", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Could not retrieve upload details")
+
+@app.get("/uploads/{upload_id}/download")
+def download_upload_excel(upload_id: int, user=Depends(current_user)):
+    from exports import build_excel
+    from fastapi.responses import StreamingResponse
+
+    details = get_upload_details(user["email"], upload_id)
+    if details is None:
+        raise HTTPException(status_code=404, detail="Upload record not found")
+    workbook = build_excel(details)
+    filename = details.get("file_name") or f"upload_{upload_id}"
+    base_name = filename.rsplit(".", 1)[0]
+    return StreamingResponse(
+        workbook,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="churnguard_{base_name}_{upload_id}.xlsx"',
+        },
+    )
 
 @app.get("/predictions/latest")
 def latest_predictions(user=Depends(current_user)):
-    return get_latest_predictions(user["email"])
+    try:
+        return get_latest_predictions(user["email"])
+    except Exception as e:
+        print("Error fetching latest predictions:", type(e).__name__, e)
+        return []
 
 
 @app.get("/history/{run_id}/download")

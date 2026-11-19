@@ -1,45 +1,239 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", sans-serif;
+  --font-serif: "Fraunces", "DM Serif Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+
+  /* Warm luxury palette from reference image */
+  --color-brand-ivory: #FFF3E4;
+  --color-brand-cream: #FFF8ED;
+  --color-brand-cream-soft: #FFF8ED;
+  --color-brand-beige: #EBC69F;
+  --color-brand-apricot: #F4D3B5;
+
+  --color-brand-plum-deep: #291C2E;
+  --color-brand-aubergine: #373152;
+  --color-brand-purple: #494269;
+  --color-brand-purple-dark: #373152;
+  --color-brand-purple-deep: #291C2E;
+  --color-brand-purple-light: #5C5482;
+
+  --color-brand-gold: #E6B95F;
+  --color-brand-gold-warm: #F3C66F;
+  --color-brand-gold-muted: #D6A34E;
+  --color-brand-gold-hover: #D6A34E;
+
+  --color-brand-taupe: #A58E81;
+  --color-brand-lavender: #A99BB9;
+  --color-brand-brown: #392D35;
+
+  --color-brand-ink: #291C2E;
+  --color-brand-ink-light: #392D35;
+  --color-brand-white: #FFF3E4;
+  --color-brand-surface: #FFF8ED;
 }
 
 @layer base {
+  :root {
+    --bg-main: #FFF3E4;
+    --text-main: #291C2E;
+  }
+
   body {
     margin: 0;
-    background: #f8fafc;
-    color: #0f172a;
+    background-color: #FFF3E4;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(244, 211, 181, 0.4) 0px, transparent 55%),
+      radial-gradient(at 100% 0%, rgba(230, 185, 95, 0.16) 0px, transparent 45%),
+      radial-gradient(at 50% 100%, rgba(235, 198, 159, 0.3) 0px, transparent 50%);
+    background-attachment: fixed;
+    color: var(--text-main);
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  @keyframes profile-menu-in {
-    from { opacity: 0; transform: scale(0.96) translateY(-4px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+  h1, h2, h3, .font-editorial {
+    font-family: var(--font-serif);
+    letter-spacing: -0.015em;
   }
 
-  button,
-  a,
-  input,
-  select,
-  textarea {
+  /* Custom subtle scrollbar with warm luxury tones */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #FFF3E4;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #EBC69F;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #E6B95F;
+  }
+
+  /* Microinteractions & focus outlines */
+  button, a, input, select, textarea {
     outline: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  /* Auth inputs adapted to deep plum & aubergine palette */
   .auth-input {
-    border: 1px solid rgb(51 65 85);
-    border-radius: 0.5rem;
-    background: rgb(30 41 59 / 0.8);
-    padding: 0.75rem 1rem;
-    color: white;
+    width: 100%;
+    border: 1.5px solid rgba(235, 198, 159, 0.35);
+    border-radius: 0.85rem;
+    background: rgba(41, 28, 46, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 0.85rem 1.15rem;
+    color: #FFF3E4;
+    font-size: 0.925rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .auth-input::placeholder {
-    color: rgb(100 116 139);
+    color: rgba(235, 198, 159, 0.6);
   }
 
   .auth-input:focus {
-    border-color: rgb(59 130 246);
-    outline: 1px solid rgb(59 130 246);
+    border-color: #E6B95F;
+    background: rgba(41, 28, 46, 0.92);
+    box-shadow: 0 0 0 3px rgba(230, 185, 95, 0.3), 0 0 20px rgba(230, 185, 95, 0.25);
+    transform: translateY(-1px);
   }
+
+  /* Standard form inputs on warm cream surfaces */
+  .field-input {
+    width: 100%;
+    border: 1.5px solid #EBC69F;
+    border-radius: 0.75rem;
+    background: #FFF8ED;
+    padding: 0.75rem 1rem;
+    color: #291C2E;
+    font-size: 0.925rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .field-input:focus {
+    border-color: #291C2E;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(41, 28, 46, 0.15), 0 0 16px rgba(230, 185, 95, 0.25);
+    transform: translateY(-1px);
+  }
+}
+
+/* ==========================================================================
+   GLOSSY & GLASS SPECULAR EFFECTS
+   ========================================================================== */
+.glossy-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 248, 237, 0.88) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(235, 198, 159, 0.7);
+  box-shadow: 
+    0 10px 30px -10px rgba(41, 28, 46, 0.08),
+    0 2px 6px -1px rgba(41, 28, 46, 0.04),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.glossy-purple {
+  position: relative;
+  background: linear-gradient(135deg, #291C2E 0%, #373152 50%, #291C2E 100%);
+  border: 1.5px solid rgba(235, 198, 159, 0.4);
+  box-shadow: 
+    0 14px 34px -10px rgba(41, 28, 46, 0.45),
+    inset 0 1px 1.5px 0 rgba(244, 211, 181, 0.3),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.glossy-gold {
+  position: relative;
+  background: linear-gradient(135deg, #F3C66F 0%, #E6B95F 50%, #D6A34E 100%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 8px 24px -6px rgba(230, 185, 95, 0.55),
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 2px 0 rgba(160, 110, 20, 0.25);
+}
+
+/* ==========================================================================
+   TOUCH & CLICK MICROINTERACTIONS WITH GLOW
+   ========================================================================== */
+.card-hover-lift {
+  position: relative;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 20px 40px -12px rgba(41, 28, 46, 0.16),
+    0 0 25px 2px rgba(230, 185, 95, 0.22),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.95);
+  border-color: rgba(230, 185, 95, 0.9);
+}
+
+/* On-touch / Click spring physics & radiant glow */
+.btn-interactive {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.2s ease;
+}
+
+/* Subtle gloss reflection overlay on buttons */
+.btn-interactive::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Touch & Hover Glow */
+.btn-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 10px 24px -4px rgba(41, 28, 46, 0.25),
+    0 0 20px 2px rgba(230, 185, 95, 0.5);
+}
+
+.btn-interactive:active {
+  transform: scale(0.955) translateY(1px) !important;
+  box-shadow: 
+    0 2px 8px rgba(41, 28, 46, 0.35),
+    0 0 26px 6px rgba(230, 185, 95, 0.7) !important;
+}
+
+/* Input Touch & Focus Glow */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #E6B95F !important;
+  box-shadow: 
+    0 0 0 3px rgba(230, 185, 95, 0.3),
+    0 0 18px rgba(230, 185, 95, 0.25) !important;
+}
+
+/* Doodles and animations */
+.doodle-sparkle {
+  display: inline-block;
+  color: #E6B95F;
+  animation: doodle-float 3s ease-in-out infinite;
+}
+
+@keyframes doodle-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(6deg); }
 }

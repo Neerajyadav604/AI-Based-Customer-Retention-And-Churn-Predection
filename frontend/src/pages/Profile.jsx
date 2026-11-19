@@ -1,21 +1,19 @@
 import { useEffect, useState } from 'react'
-import { changePassword, getMe, updateProfile, uploadProfilePhoto } from '../api'
+import { changePassword, getMe, updateProfile } from '../api'
 import Card from '../components/Card'
 import ChangePasswordForm from '../components/ChangePasswordForm'
 import ErrorMessage from '../components/ErrorMessage'
-import PageHeader from '../components/PageHeader'
 import ProfileGeneralForm from '../components/ProfileGeneralForm'
 import Spinner from '../components/Spinner'
 import { useAuth } from '../context/AuthContext'
+import { DoodleSparkle, DoodleAvatar } from '../components/Doodles'
 
 const emptyPassword = { current: '', next: '', repeat: '' }
 
-// Return safe values for older accounts.
 function profileDefaults(data) {
   return { name: '', email: '', phone: '', business_name: '', business_type: '', photo_url: '', ...data }
 }
 
-// Edit the signed-in user's profile and password.
 export default function Profile() {
   const { updateUser } = useAuth()
   const [profile, setProfile] = useState(profileDefaults())
@@ -27,13 +25,12 @@ export default function Profile() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
-  // Load the current profile.
   useEffect(() => {
     async function loadProfile() {
       try {
         setProfile(profileDefaults(await getMe()))
-      } catch (requestError) {
-        setError(requestError.message)
+      } catch (err) {
+        setError(err.message)
       } finally {
         setLoading(false)
       }
@@ -41,55 +38,37 @@ export default function Profile() {
     loadProfile()
   }, [])
 
-  // Keep the uploaded photo in the form state.
   async function handlePhoto(photoPromise) {
     setPhotoLoading(true)
     setError('')
     try {
       setProfile({ ...profile, photo_url: await photoPromise })
-    } catch (uploadError) {
-      setError(uploadError.message)
+    } catch (err) {
+      setError(err.message)
     } finally {
       setPhotoLoading(false)
     }
   }
 
-  // Save general profile information.
-  async function handleSave(event) {
-    event.preventDefault()
-    const cleanName = profile.name.trim()
-    if (cleanName.length < 2 || cleanName.length > 60) {
-      setError('Name must be between 2 and 60 characters.')
-      return
-    }
+  async function handleSaveProfile(e) {
+    e.preventDefault()
     setSaving(true)
     setError('')
     setMessage('')
     try {
-      const data = await updateProfile({
-        name: cleanName,
-        phone: profile.phone || null,
-        business_name: profile.business_name || null,
-        business_type: profile.business_type || null,
-      })
-      const nextProfile = profileDefaults(data)
-      setProfile(nextProfile)
-      updateUser(nextProfile)
+      const updated = await updateProfile(profile)
+      setProfile(profileDefaults(updated))
+      updateUser?.(updated)
       setMessage('Profile updated successfully.')
-    } catch (requestError) {
-      setError(requestError.message)
+    } catch (err) {
+      setError(err.message)
     } finally {
       setSaving(false)
     }
   }
 
-  // Change the account password.
-  async function handlePassword(event) {
-    event.preventDefault()
-    if (passwords.next.length < 8 || passwords.next.length > 64) {
-      setError('New password must be between 8 and 64 characters.')
-      return
-    }
+  async function handleSavePassword(e) {
+    e.preventDefault()
     if (passwords.next !== passwords.repeat) {
       setError('New passwords do not match.')
       return
@@ -100,26 +79,89 @@ export default function Profile() {
     try {
       await changePassword(passwords.current, passwords.next)
       setPasswords(emptyPassword)
-      setMessage('Password updated successfully.')
-    } catch (requestError) {
-      setError(requestError.message)
+      setMessage('Password changed successfully.')
+    } catch (err) {
+      setError(err.message)
     } finally {
       setPasswordSaving(false)
     }
   }
 
-  if (loading) return <Spinner label="Loading profile..." />
-  if (error && !profile.email) return <ErrorMessage message={error} />
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Spinner label="Loading user profile settings..." />
+      </div>
+    )
+  }
 
   return (
-    <section>
-      <PageHeader title="Profile" description="Manage your personal and business information." />
-      {error && <div className="mb-4"><ErrorMessage message={error} /></div>}
-      {message && <p className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-green-700">{message}</p>}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card><ProfileGeneralForm profile={profile} onChange={(event) => setProfile({ ...profile, [event.target.name]: event.target.value })} onSave={handleSave} onPhoto={handlePhoto} uploadPhotoRequest={uploadProfilePhoto} saving={saving} photoLoading={photoLoading} /></Card>
-        <Card><ChangePasswordForm passwords={passwords} onChange={setPasswords} onSubmit={handlePassword} saving={passwordSaving} /></Card>
+    <div className="space-y-8 max-w-4xl">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#EBC69F]/50 pb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-[#494269]/70">
+              Account Preferences
+            </span>
+            <span className="rounded-full bg-[#EBC69F]/40 px-2 py-0.5 text-[10px] font-bold text-[#494269]">
+              Settings
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="font-editorial text-3xl font-bold tracking-tight text-[#291C2E] sm:text-4xl">
+              User Profile & Security
+            </h1>
+            <DoodleSparkle size={20} className="text-[#E6B95F]" />
+          </div>
+          <p className="mt-1.5 text-sm text-[#392D35]">
+            Manage your personal contact details, workspace organization identity, and account credentials.
+          </p>
+        </div>
       </div>
-    </section>
+
+      {error && <ErrorMessage message={error} />}
+      {message && (
+        <div className="rounded-2xl border border-[#7EAA79] bg-[#EAF5E9] p-4 text-xs font-semibold text-[#2D5A27]">
+          ✓ {message}
+        </div>
+      )}
+
+      {/* Profile Form */}
+      <Card className="rounded-3xl border-[#EBC69F]">
+        <h2 className="font-editorial text-2xl font-bold text-[#291C2E] mb-1">
+          General Details
+        </h2>
+        <p className="text-xs text-[#392D35] mb-6">
+          Your personal and business profile details across ChurnGuard workspaces.
+        </p>
+
+        <ProfileGeneralForm
+          profile={profile}
+          onChange={(field, value) => setProfile({ ...profile, [field]: value })}
+          onSubmit={handleSaveProfile}
+          onPhotoChange={handlePhoto}
+          saving={saving}
+          photoLoading={photoLoading}
+        />
+      </Card>
+
+      {/* Password Reset Form */}
+      <Card className="rounded-3xl border-[#EBC69F]">
+        <h2 className="font-editorial text-2xl font-bold text-[#291C2E] mb-1">
+          Security & Password
+        </h2>
+        <p className="text-xs text-[#392D35] mb-6">
+          Update the password used to authenticate into your account.
+        </p>
+
+        <ChangePasswordForm
+          passwords={passwords}
+          onChange={(field, value) => setPasswords({ ...passwords, [field]: value })}
+          onSubmit={handleSavePassword}
+          saving={passwordSaving}
+        />
+      </Card>
+    </div>
   )
 }

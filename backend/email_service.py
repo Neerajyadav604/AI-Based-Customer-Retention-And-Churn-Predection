@@ -60,8 +60,18 @@ def send_otp_email(to_email, name, otp):
                 response.status_code,
                 response.text,
             )
+            if os.getenv("APP_ENV", "").lower() == "dev":
+                print(f"\n==========================================")
+                print(f"[DEV MODE OTP] Fallback OTP for {to_email}: {otp}")
+                print(f"==========================================\n")
+                return
             response.raise_for_status()
     except requests.RequestException as exc:
         if exc.response is None:
             logger.error("Brevo email request failed before receiving a response: %s", exc)
+        if os.getenv("APP_ENV", "").lower() == "dev":
+            print(f"\n==========================================")
+            print(f"[DEV MODE OTP] Fallback OTP for {to_email}: {otp}")
+            print(f"==========================================\n")
+            return
         raise EmailServiceError("Brevo could not send the email") from exc

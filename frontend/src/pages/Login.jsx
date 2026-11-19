@@ -4,7 +4,6 @@ import { Lottie } from 'lottie-react'
 import { useAuth } from '../context/AuthContext'
 import AuthPageShell from '../components/AuthPageShell'
 import ErrorMessage from '../components/ErrorMessage'
-import Spinner from '../components/Spinner'
 import PasswordField from '../components/PasswordField'
 import GoogleButton from '../components/GoogleButton'
 import loginAnimation from '../assets/study-discussion.json'
@@ -21,53 +20,114 @@ export default function Login() {
   const [error, setError] = useState(location.state?.error || '')
   const [loading, setLoading] = useState(false)
 
-  function handleChange(event) {
-    setForm({ ...form, [event.target.name]: event.target.value })
+  function handleChange(e) {
+    setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault()
+  async function handleSubmit(e) {
+    e.preventDefault()
     if (!isValidEmail(form.email)) {
       setError('Please enter a valid email address.')
       return
     }
-    if (form.password.length < 8 || form.password.length > 64) {
-      setError('Password must be between 8 and 64 characters.')
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.')
       return
     }
     setLoading(true)
     setError('')
     try {
-      const loggedInUser = await login(form.email, form.password)
-      const destination = loggedInUser.onboarding_completed === false
-        ? '/onboarding'
-        : '/'
-      navigate(destination, { replace: true })
-    } catch (requestError) {
-      if (requestError.code === 'EMAIL_NOT_VERIFIED') {
-        navigate('/verify-email', { state: { email: requestError.email || form.email, message: 'Verify your email before signing in.' } })
+      const user = await login(form.email, form.password)
+      const dest = user.onboarding_completed === false ? '/onboarding' : '/workspace'
+      navigate(dest, { replace: true })
+    } catch (err) {
+      if (err.code === 'EMAIL_NOT_VERIFIED') {
+        navigate('/verify-email', {
+          state: {
+            email: err.email || form.email,
+            message: 'Please verify your email code before signing in.',
+          },
+        })
         return
       }
-      setError(requestError.message)
+      setError(err.message || 'Invalid email or password.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AuthPageShell title="Sign In" switchText="New user?" switchLabel="Create an account" switchTo="/signup" illustration={<Lottie src={loginAnimation} autoplay loop className="h-[460px] w-full max-w-lg" aria-label="Study discussion animation" />}>
-      <div className="mb-6"><GoogleButton /></div>
-      <p className="mb-6 text-center text-xs text-slate-400">Or continue with email</p>
-      <form onSubmit={handleSubmit} className="grid gap-4">
-        <label className="grid gap-2 text-xs font-medium text-slate-300">Email
-          <input required type="email" name="email" value={form.email} onChange={handleChange} placeholder="Enter Email" className="rounded-lg border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
-        </label>
-        <PasswordField name="password" label="Password" value={form.password} onChange={handleChange} placeholder="Enter Password" className="text-slate-300" />
-        <ErrorMessage message={error} />
-        <button type="submit" disabled={loading} className="rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
-          {loading ? <Spinner label="Signing in..." /> : 'Sign In'}
-        </button>
-      </form>
+    <AuthPageShell
+      title="Welcome Back"
+      subtitle="Sign in to your ChurnGuard account to access live cohort analytics and prediction tools."
+      switchText="Don't have an account yet?"
+      switchLabel="Create Account"
+      switchTo="/signup"
+      illustration={
+        <div className="relative w-full max-w-lg flex flex-col items-center">
+          <div className="w-full h-[380px] sm:h-[430px] flex items-center justify-center">
+            <Lottie
+              src={loginAnimation}
+              autoplay
+              loop
+              style={{ width: '100%', height: '100%', minHeight: '360px' }}
+              aria-label="Discussion animation"
+            />
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-5">
+        <GoogleButton />
+
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-[#A99BB9]/30" />
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#A99BB9]">
+            Or continue with email
+          </span>
+          <div className="h-px flex-1 bg-[#A99BB9]/30" />
+        </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#F4D3B5] mb-1.5">
+              Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="you@company.com"
+              value={form.email}
+              onChange={handleChange}
+              className="auth-input font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#F4D3B5] mb-1.5">
+              Password
+            </label>
+            <PasswordField
+              name="password"
+              placeholder="••••••••"
+              theme="dark"
+              value={form.password}
+              onChange={handleChange}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-2xl bg-[#E6B95F] py-3.5 text-sm font-bold text-[#291C2E] shadow-md hover:bg-[#D6A34E] transition disabled:opacity-50 btn-interactive cursor-pointer mt-2"
+          >
+            {loading ? 'Authenticating...' : 'Sign In to Workspace →'}
+          </button>
+        </form>
+      </div>
     </AuthPageShell>
   )
 }

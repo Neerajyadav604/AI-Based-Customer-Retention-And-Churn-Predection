@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AuthPageShell from '../components/AuthPageShell'
 import ErrorMessage from '../components/ErrorMessage'
-import Spinner from '../components/Spinner'
 import { resendOtp } from '../api'
 import { useAuth } from '../context/AuthContext'
 
@@ -17,15 +16,15 @@ export default function VerifyEmail() {
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
 
-  async function handleSubmit(event) {
-    event.preventDefault()
+  async function handleSubmit(e) {
+    e.preventDefault()
     setLoading(true)
     setError('')
     try {
       const user = await verifyEmail(email, otp)
-      navigate(user.onboarding_completed === false ? '/onboarding' : '/', { replace: true })
-    } catch (requestError) {
-      setError(requestError.message)
+      navigate(user.onboarding_completed === false ? '/onboarding' : '/workspace', { replace: true })
+    } catch (err) {
+      setError(err.message || 'Verification failed. Please check the code.')
     } finally {
       setLoading(false)
     }
@@ -36,36 +35,87 @@ export default function VerifyEmail() {
     setError('')
     setNotice('')
     try {
-      const result = await resendOtp(email)
-      setNotice(result.message)
-    } catch (requestError) {
-      setError(requestError.message)
+      const res = await resendOtp(email)
+      setNotice(res.message || 'A fresh verification code has been dispatched.')
+    } catch (err) {
+      setError(err.message || 'Could not resend code.')
     } finally {
       setResending(false)
     }
   }
 
   return (
-    <AuthPageShell title="Verify your email" switchText="Already verified?" switchLabel="Sign in" switchTo="/login">
-      <p className="mb-6 text-sm text-slate-400">Enter the 6-digit code sent to your email. It expires in 10 minutes.</p>
-      <form onSubmit={handleSubmit} className="grid gap-4">
-        <label className="grid gap-2 text-xs font-medium text-slate-300">
-          Email
-          <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input" />
-        </label>
-        <label className="grid gap-2 text-xs font-medium text-slate-300">
-          Verification code
-          <input required inputMode="numeric" pattern="\d{6}" maxLength={6} value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, ''))} className="auth-input font-mono tracking-[0.4em]" />
-        </label>
-        <ErrorMessage message={error} />
-        {notice && <p className="text-sm text-emerald-300" role="status">{notice}</p>}
-        <button type="submit" disabled={loading} className="rounded-lg bg-[#0b57d0] px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
-          {loading ? <Spinner label="Verifying..." /> : 'Verify email'}
-        </button>
-      </form>
-      <button type="button" onClick={handleResend} disabled={resending || !email} className="mt-4 w-full text-sm text-blue-300 hover:text-white disabled:opacity-50">
-        {resending ? 'Sending...' : 'Resend code'}
-      </button>
+    <AuthPageShell
+      title="Verify Your Email"
+      subtitle="Enter the 6-digit verification code to activate your account."
+      switchText="Already verified?"
+      switchLabel="Sign In"
+      switchTo="/login"
+      illustration={
+        <div className="size-48 rounded-full bg-[#EBC69F]/20 flex items-center justify-center border-4 border-[#EBC69F]/40 shadow-inner">
+          <svg viewBox="0 0 24 24" fill="none" className="size-24 text-[#E6B95F] stroke-current stroke-1.5">
+            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        {notice && (
+          <div className="rounded-2xl border border-[#7EAA79] bg-[#EAF5E9] p-3.5 text-xs text-[#2D5A27]">
+            {notice}
+          </div>
+        )}
+        {error && <ErrorMessage message={error} />}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#F4D3B5] mb-1">
+              Account Email
+            </label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="auth-input font-mono text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#F4D3B5] mb-1">
+              6-Digit Code
+            </label>
+            <input
+              type="text"
+              required
+              maxLength={6}
+              placeholder="000000"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.trim())}
+              className="auth-input text-center font-mono text-2xl tracking-[0.3em] font-bold"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || otp.length < 6}
+            className="w-full rounded-2xl bg-[#E6B95F] py-3.5 text-sm font-bold text-[#291C2E] shadow-md hover:bg-[#D6A34E] transition disabled:opacity-50 btn-interactive cursor-pointer"
+          >
+            {loading ? 'Verifying Code...' : 'Confirm Verification →'}
+          </button>
+        </form>
+
+        <div className="pt-2 text-center">
+          <button
+            type="button"
+            disabled={resending}
+            onClick={handleResend}
+            className="text-xs font-semibold text-[#EBC69F] hover:text-white underline"
+          >
+            {resending ? 'Sending...' : 'Resend Verification Code'}
+          </button>
+        </div>
+      </div>
     </AuthPageShell>
   )
 }

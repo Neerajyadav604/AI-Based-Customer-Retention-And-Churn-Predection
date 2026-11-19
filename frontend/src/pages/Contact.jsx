@@ -1,13 +1,35 @@
-// Show simple project contact information.
+import { DoodleSparkle } from '../components/Doodles'
+
 export default function Contact() {
   return (
-    <section className="mx-auto max-w-2xl">
-      <h1 className="mb-3 text-4xl font-bold text-slate-900">Contact</h1>
-      <p className="text-slate-600">This is a final-year B.Tech project about helping small sellers understand customer churn.</p>
-      <p className="mt-4 text-slate-600">
-        {/* TODO: replace with the real email */}
-        Email us at <a href="mailto:hello@example.com" className="font-medium text-indigo-600 underline outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">hello@example.com</a>
+    <div className="mx-auto max-w-2xl py-12 text-[#291C2E]">
+      <div className="inline-flex items-center gap-2 rounded-full border border-[#EBC69F] bg-[#FFF8ED] px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-[#494269] mb-4">
+        <DoodleSparkle size={14} className="text-[#E6B95F]" />
+        <span>Get in Touch</span>
+      </div>
+      <h1 className="font-editorial text-4xl font-bold tracking-tight text-[#291C2E] sm:text-5xl">
+        Contact Project Team
+      </h1>
+      <p className="mt-4 text-base leading-relaxed text-[#392D35]">
+        Have questions regarding the predictive algorithms, integration pipelines, or dataset methodology?
       </p>
-    </section>
+
+      <div className="mt-8 rounded-3xl border border-[#EBC69F] bg-white p-8 shadow-sm space-y-4 text-sm">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#494269]">Direct Inquiries</p>
+          <p className="mt-1 font-mono font-medium text-[#291C2E]">
+            <a href="mailto:support@churnguard.app" className="text-[#494269] underline hover:text-[#291C2E]">
+              support@churnguard.app
+            </a>
+          </p>
+        </div>
+        <div className="border-t border-[#EBC69F]/40 pt-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#494269]">Project Affiliation</p>
+          <p className="mt-1 text-xs text-[#392D35]">
+            Final-Year B.Tech Computer Engineering & Machine Learning Project.
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }

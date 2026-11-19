@@ -5,6 +5,8 @@ const paths = {
   insights: <><path d="M4 19V5" /><path d="M4 19h16" /><path d="M7 15v-3M12 15V8M17 15v-6" /></>,
   history: <><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /><path d="M12 7v5l3 2" /></>,
   recommendations: <><path d="M9 18h6" /><path d="M10 22h4" /><path d="M8.2 14.5A7 7 0 1 1 16 14c-.8.6-1.4 1.4-1.7 2.3H9.7a5.2 5.2 0 0 0-1.5-1.8Z" /></>,
+  database: <><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" /></>,
+  data: <><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" /></>,
   profile: <><circle cx="12" cy="8" r="3" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
   menu: <><path d="M4 6h16M4 12h16M4 18h16" /></>,
   chevron: <path d="m7 10 5 5 5-5" />,

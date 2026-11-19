@@ -96,6 +96,7 @@ export function getInsights() {
 export function loginUser(email, password) {
   return request('/auth/login', {
     method: 'POST',
+    skipAuthRedirect: true,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   })
@@ -113,6 +114,7 @@ export function googleLogin(accessToken) {
 export function verifyOtp(email, otp) {
   return request('/auth/verify-otp', {
     method: 'POST',
+    skipAuthRedirect: true,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, otp }),
   })
@@ -121,6 +123,7 @@ export function verifyOtp(email, otp) {
 export function resendOtp(email) {
   return request('/auth/resend-otp', {
     method: 'POST',
+    skipAuthRedirect: true,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
   })
@@ -130,6 +133,7 @@ export function resendOtp(email) {
 export function signupUser(name, email, password, jobRole, termsAccepted) {
   return request('/auth/signup', {
     method: 'POST',
+    skipAuthRedirect: true,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, email, password, job_role: jobRole || null, terms_accepted: termsAccepted }),
   })
@@ -155,6 +159,22 @@ export function completeOnboarding() {
 // Get previous single and batch prediction records.
 export function getHistory() {
   return request('/history')
+}
+
+// Get previous bulk CSV upload runs.
+export function getUploadHistory() {
+  return request('/uploads').catch(() => request('/history'))
+}
+
+// Get deep details and customer predictions for a specific upload run.
+export function getUploadDetails(uploadId) {
+  return request(`/uploads/${uploadId}`)
+}
+
+// Download Excel results for a specific upload run.
+export async function downloadUploadResults(uploadId) {
+  const blob = await request(`/uploads/${uploadId}/download`, { responseType: 'blob' })
+  return blob
 }
 
 export function getLatestPredictions() {
@@ -231,5 +251,39 @@ export function sendContact(name, email, message) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, email, message }),
+  })
+}
+
+// ==========================================
+// CHATBOT API INTEGRATION
+// ==========================================
+
+export function sendChatMessage(message, sessionId) {
+  return request('/api/chat/message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, session_id: sessionId }),
+    skipAuthRedirect: true,
+  })
+}
+
+export function getChatHistory(sessionId) {
+  const query = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ''
+  return request(`/api/chat/history${query}`, {
+    skipAuthRedirect: true,
+  })
+}
+
+export function clearChatHistory(sessionId) {
+  const query = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ''
+  return request(`/api/chat/history${query}`, {
+    method: 'DELETE',
+    skipAuthRedirect: true,
+  })
+}
+
+export function getChatSuggestions() {
+  return request('/api/chat/suggestions', {
+    skipAuthRedirect: true,
   })
 }

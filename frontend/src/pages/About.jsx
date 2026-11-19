@@ -1,37 +1,85 @@
-// Explain the purpose, method, and limits of the project.
+import { DoodleSparkle } from '../components/Doodles'
+
 export default function About() {
   return (
-    <section className="mx-auto max-w-4xl space-y-10">
+    <div className="mx-auto max-w-4xl space-y-12 py-10 text-[#291C2E]">
+      {/* Header */}
       <div>
-        <h1 className="mb-3 text-4xl font-bold text-slate-900">About ChurnGuard</h1>
-        <p className="text-lg text-slate-600">This final-year project helps small online sellers, local vendors, and kirana stores understand customer churn and plan simple retention follow-ups.</p>
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#EBC69F] bg-[#FFF8ED] px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-[#494269] mb-4">
+          <DoodleSparkle size={14} className="text-[#E6B95F]" />
+          <span>Academic & Industry Research</span>
+        </div>
+        <h1 className="font-editorial text-4xl font-bold tracking-tight text-[#291C2E] sm:text-5xl">
+          About the ChurnGuard Project
+        </h1>
+        <p className="mt-4 text-base leading-relaxed text-[#392D35] sm:text-lg">
+          An applied B.Tech final-year research initiative engineered to bridge enterprise predictive intelligence with accessible, actionable tools for local online vendors, retail shops, and small enterprises.
+        </p>
       </div>
-      <div>
-        <h2 className="mb-3 text-2xl font-bold">How it works in plain words</h2>
-        <p className="text-slate-600">The model looks at three useful parts of a customer’s buying history:</p>
-        <ul className="mt-4 grid gap-4 sm:grid-cols-3">
-          <li className="rounded-lg bg-white p-5 shadow-sm"><strong>Recency</strong><p className="mt-2 text-slate-600">How many days since the last order.</p></li>
-          <li className="rounded-lg bg-white p-5 shadow-sm"><strong>Frequency</strong><p className="mt-2 text-slate-600">How often the customer orders.</p></li>
-          <li className="rounded-lg bg-white p-5 shadow-sm"><strong>Monetary</strong><p className="mt-2 text-slate-600">How much the customer spends.</p></li>
-        </ul>
+
+      {/* Core Methodology RFM */}
+      <div className="rounded-3xl border border-[#EBC69F] bg-white p-8 sm:p-10 shadow-sm">
+        <h2 className="font-editorial text-2xl font-bold text-[#291C2E]">
+          Mathematical Foundation: RFM Analytics
+        </h2>
+        <p className="mt-2 text-sm text-[#392D35]">
+          Rather than relying on vague sentiment, ChurnGuard computes empirical behavioral features from raw transactional orders:
+        </p>
+
+        <div className="mt-6 grid gap-6 sm:grid-cols-3">
+          <div className="rounded-2xl border border-[#EBC69F]/80 bg-[#FFF8ED]/50 p-6">
+            <span className="font-editorial text-2xl font-bold text-[#494269]">Recency</span>
+            <p className="mt-2 text-xs leading-relaxed text-[#392D35]">
+              Days elapsed since the customer last transacted. Strongest predictive indicator of defection risk.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-[#EBC69F]/80 bg-[#FFF8ED]/50 p-6">
+            <span className="font-editorial text-2xl font-bold text-[#494269]">Frequency</span>
+            <p className="mt-2 text-xs leading-relaxed text-[#392D35]">
+              Total count of historic orders. Measures engagement consistency and ongoing relationship strength.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-[#EBC69F]/80 bg-[#FFF8ED]/50 p-6">
+            <span className="font-editorial text-2xl font-bold text-[#494269]">Monetary</span>
+            <p className="mt-2 text-xs leading-relaxed text-[#392D35]">
+              Lifetime gross revenue generated. Helps prioritize retention marketing on accounts with highest lifetime value.
+            </p>
+          </div>
+        </div>
       </div>
-      <div>
-        <h2 className="mb-3 text-2xl font-bold">Technology stack</h2>
-        <ul className="list-inside list-disc space-y-1 text-slate-600">
-          <li>React with Vite and JavaScript</li>
-          <li>Tailwind CSS utility classes</li>
-          <li>FastAPI backend and a machine-learning model</li>
-          <li>Recharts for dashboard visualizations</li>
-        </ul>
+
+      {/* Tech Stack */}
+      <div className="rounded-3xl border border-[#EBC69F] bg-[#494269] p-8 text-[#FFF3E4]">
+        <h2 className="font-editorial text-2xl font-bold text-[#F4D3B5]">
+          Technical Architecture & Stack
+        </h2>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 text-xs text-[#F4D3B5]/90">
+          <div className="rounded-xl bg-[#373152] p-4 border border-[#A99BB9]/30">
+            <strong className="text-[#E6B95F] block text-sm mb-1">Inference Engine</strong>
+            FastAPI, Scikit-Learn Logistic Regression Pipeline, Joblib, Pandas feature transformers.
+          </div>
+          <div className="rounded-xl bg-[#373152] p-4 border border-[#A99BB9]/30">
+            <strong className="text-[#E6B95F] block text-sm mb-1">Frontend Client</strong>
+            React 19, Vite 8, Tailwind CSS v4, Recharts, Editorial Fraunces & Plus Jakarta Sans typography.
+          </div>
+          <div className="rounded-xl bg-[#373152] p-4 border border-[#A99BB9]/30">
+            <strong className="text-[#E6B95F] block text-sm mb-1">Data Storage</strong>
+            MongoDB Atlas for user management and auth; MySQL/TiDB for transactional order logs and run histories.
+          </div>
+          <div className="rounded-xl bg-[#373152] p-4 border border-[#A99BB9]/30">
+            <strong className="text-[#E6B95F] block text-sm mb-1">Security & Billing</strong>
+            JWT token session management, bcrypt salt hashing, and Razorpay payment checkout integration.
+          </div>
+        </div>
       </div>
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-amber-900">
-        <h2 className="text-2xl font-bold">Limitations</h2>
-        <p className="mt-3">The baseline model was trained on a public UK online-retail dataset. That dataset may not perfectly represent every local seller, product category, or customer group. Predictions are estimates and should support, not replace, a seller’s personal judgement.</p>
+
+      {/* Disclaimer / Limitations */}
+      <div className="rounded-3xl border-2 border-[#EBC69F] bg-[#FAF2DF] p-6 text-xs text-[#8C6819]">
+        <h3 className="font-editorial text-lg font-bold text-[#8C6819] mb-1">Academic Project Scope & Dataset Notes</h3>
+        <p className="leading-relaxed">
+          The baseline ML model is trained and benchmarked on public e-commerce transaction records. Predictions provide probabilistic risk guidance and are intended to assist business owners in prioritizing customer follow-up actions.
+        </p>
       </div>
-      <div>
-        <h2 className="mb-3 text-2xl font-bold">Our team</h2>
-        <p className="text-slate-600">Student project team placeholder. Team member names and responsibilities can be added here.</p>
-      </div>
-    </section>
+    </div>
   )
 }
