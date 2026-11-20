@@ -16,6 +16,7 @@ from db import (
     get_history,
     get_upload_history,
     get_upload_details,
+    delete_upload,
     record_failed_upload,
     get_latest_stats,
     init_db,
@@ -252,6 +253,17 @@ def get_upload(upload_id: int, user=Depends(current_user)):
     except Exception as e:
         print("Error fetching upload details:", type(e).__name__, e)
         raise HTTPException(status_code=500, detail="Could not retrieve upload details")
+
+@app.delete("/uploads/{upload_id}")
+@app.delete("/upload/history/{upload_id}")
+def delete_upload_record(upload_id: int, user=Depends(current_user)):
+    result = delete_upload(user["email"], upload_id)
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=result.get("status_code", 400),
+            detail=result.get("detail", "Could not delete upload record"),
+        )
+    return result
 
 @app.get("/uploads/{upload_id}/download")
 def download_upload_excel(upload_id: int, user=Depends(current_user)):

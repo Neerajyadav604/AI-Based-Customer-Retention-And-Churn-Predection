@@ -1,6 +1,11 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { getUploadHistory, getUploadDetails, downloadUploadResults } from '../api'
+import {
+  getUploadHistory,
+  getUploadDetails,
+  downloadUploadResults,
+  deleteUpload,
+} from '../api'
 import ErrorMessage from '../components/ErrorMessage'
 import Spinner from '../components/Spinner'
 import Card from '../components/Card'
@@ -42,6 +47,60 @@ export default function History() {
   const [detailError, setDetailError] = useState('')
   const [customerSearch, setCustomerSearch] = useState('')
   const [downloadingId, setDownloadingId] = useState(null)
+
+  // Delete upload states
+  const [uploadToDelete, setUploadToDelete] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+  const [toastMessage, setToastMessage] = useState(null)
+
+  async function handleConfirmDelete() {
+    if (!uploadToDelete?.id || isDeleting) return
+    setIsDeleting(true)
+    setDeleteError('')
+
+    const targetId = uploadToDelete.id
+    const targetName = uploadToDelete.file_name || `Upload #${targetId}`
+
+    try {
+      await deleteUpload(targetId)
+
+      // 1. Immediately remove from UI without page refresh
+      setUploads((prev) => prev.filter((u) => u.id !== targetId))
+
+      // 2. If the detail modal was inspecting this deleted upload, close it
+      if (selectedUploadId === targetId) {
+        setSelectedUploadId(null)
+        setUploadDetail(null)
+      }
+
+      // 3. Clean up cached session dataset if it matches
+      try {
+        const cached = sessionStorage.getItem('churnguard_latest_retention_dataset')
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (parsed?.uploadId === targetId) {
+            sessionStorage.removeItem('churnguard_latest_retention_dataset')
+          }
+        }
+      } catch (e) {
+        console.warn('Session cache cleanup:', e)
+      }
+
+      // 4. Show success notification
+      setToastMessage({
+        type: 'success',
+        message: `Upload record "${targetName}" was permanently deleted.`,
+      })
+      setTimeout(() => setToastMessage(null), 4500)
+
+      setUploadToDelete(null)
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete upload record from database.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   async function fetchHistory(isRefresh = false) {
     if (isRefresh) setRefreshing(true)
@@ -190,6 +249,30 @@ export default function History() {
           </button>
         </div>
       </div>
+
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div
+          className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-xs font-semibold shadow-xs transition-all duration-300 animate-in fade-in slide-in-from-top-2 ${
+            toastMessage.type === 'success'
+              ? 'border-[#7EAA79] bg-[#EAF5E9] text-[#2D5A27]'
+              : 'border-[#C87979] bg-[#FAECEC] text-[#8C2A2A]'
+          }`}
+          role="status"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold">{toastMessage.type === 'success' ? '✓' : '⚠️'}</span>
+            <span>{toastMessage.message}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="text-xs hover:opacity-75 transition font-bold px-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {error && <ErrorMessage message={error} />}
 
@@ -384,6 +467,21 @@ export default function History() {
                               {downloadingId === item.id ? '...' : '📥'}
                             </button>
                           )}
+                          <button
+                            type="button"
+                            disabled={isDeleting && uploadToDelete?.id === item.id}
+                            onClick={() => {
+                              setDeleteError('')
+                              setUploadToDelete(item)
+                            }}
+                            className="rounded-xl border border-[#EBC69F] bg-white p-2 text-xs font-semibold text-[#8C2A2A] hover:bg-[#FAECEC] hover:border-[#C87979] hover:text-[#B83838] transition disabled:opacity-50 cursor-pointer shadow-2xs"
+                            title="Delete Upload from History"
+                            aria-label={`Delete upload ${item.file_name || item.id}`}
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" className="size-3.5 stroke-current stroke-2">
+                              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -472,6 +570,20 @@ export default function History() {
                     </button>
                   </>
                 )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError('')
+                    setUploadToDelete(uploadDetail)
+                  }}
+                  className="rounded-xl border border-[#C87979]/60 bg-white p-2 text-xs font-semibold text-[#8C2A2A] hover:bg-[#FAECEC] hover:border-[#C87979] hover:text-[#B83838] transition shadow-2xs"
+                  title="Delete Upload from History"
+                  aria-label="Delete this upload"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" className="size-4 stroke-current stroke-2">
+                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
                 <button
                   type="button"
                   onClick={() => setSelectedUploadId(null)}
@@ -642,6 +754,88 @@ export default function History() {
                 </div>
               </div>
             ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          DELETE CONFIRMATION DIALOG MODAL
+          ======================================================== */}
+      {uploadToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-xs animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+        >
+          <div className="w-full max-w-md rounded-3xl border-2 border-[#EBC69F] bg-[#FFF8ED] p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3.5">
+              <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#FAECEC] border border-[#C87979]/50 text-[#8C2A2A] shadow-xs">
+                <svg viewBox="0 0 24 24" fill="none" className="size-6 stroke-current stroke-2">
+                  <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+
+              <div>
+                <h3
+                  id="delete-dialog-title"
+                  className="font-editorial text-xl font-bold text-[#291C2E]"
+                >
+                  Delete Upload?
+                </h3>
+                <p className="mt-1 text-xs text-[#392D35] leading-relaxed">
+                  Are you sure you want to permanently delete this upload from your history?
+                </p>
+              </div>
+            </div>
+
+            {/* Target Item Summary */}
+            <div className="rounded-2xl border border-[#EBC69F] bg-white p-3.5 text-xs space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-[#291C2E] truncate">
+                  📄 {uploadToDelete.file_name || `Upload #${uploadToDelete.id}`}
+                </span>
+              </div>
+              <p className="font-mono text-[10px] text-[#A99BB9]">
+                ID: #{uploadToDelete.id} • {uploadToDelete.total || uploadToDelete.customer_count || 0} accounts evaluated
+              </p>
+              <p className="text-[11px] text-[#8C2A2A] pt-1 font-medium leading-relaxed">
+                ⚠️ This will permanently remove the uploaded customer orders, predictions, and retention analysis for this dataset.
+              </p>
+            </div>
+
+            {deleteError && <ErrorMessage message={deleteError} />}
+
+            {/* Actions: Cancel and Delete */}
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#EBC69F]/50">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => {
+                  setUploadToDelete(null)
+                  setDeleteError('')
+                }}
+                className="rounded-xl border border-[#EBC69F] bg-white px-4 py-2 text-xs font-semibold text-[#494269] hover:bg-[#FAF2DF] transition disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="rounded-xl bg-[#B83838] px-5 py-2 text-xs font-bold text-white hover:bg-[#8C2A2A] shadow-xs hover:shadow-md transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              >
+                {isDeleting ? (
+                  <>
+                    <span className="animate-spin text-sm">↻</span>
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete</span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

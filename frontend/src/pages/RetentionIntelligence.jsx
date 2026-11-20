@@ -641,7 +641,10 @@ export default function RetentionIntelligence() {
                 <XAxis
                   type="number"
                   tick={{ fontSize: 11, fill: '#392D35' }}
-                  tickFormatter={(val) => Number(val).toFixed(2)}
+                  tickFormatter={(val) => {
+                    const num = Number(val)
+                    return isNaN(num) ? val : num.toFixed(2)
+                  }}
                   domain={['dataMin - 0.2', 'dataMax + 0.2']}
                 />
                 <YAxis
@@ -651,7 +654,8 @@ export default function RetentionIntelligence() {
                   tick={{ fontSize: 11, fill: '#291C2E', fontWeight: 600 }}
                 />
                 <Tooltip
-                  cursor={{ fill: 'rgba(235, 198, 159, 0.25)' }}
+                  cursor={{ fill: 'rgba(230, 185, 95, 0.18)' }}
+                  wrapperStyle={{ outline: 'none', zIndex: 100 }}
                   content={({ active, payload }) => {
                     if (!active || !payload || !payload.length) return null
                     const data = payload[0].payload
@@ -669,19 +673,19 @@ export default function RetentionIntelligence() {
                               color: isPositive ? '#B83838' : '#43823C',
                             }}
                           >
-                            SHAP: {isPositive ? '+' : ''}{Number(data.shap).toFixed(4)}
+                            SHAP Attribution: {isPositive ? '+' : ''}{Number(data.shap).toFixed(4)}
                           </span>
                           <span
                             className="font-bold"
                             style={{ color: isPositive ? '#B83838' : '#43823C' }}
                           >
-                            {isPositive ? 'Pushes risk UP' : 'Pulls risk DOWN'} by {Math.abs(data.impact).toFixed(1)}%
+                            {isPositive ? 'Increases churn risk' : 'Protects retention'} ({Math.abs(data.impact).toFixed(1)}%)
                           </span>
                         </div>
-                        <p className="mt-1.5 text-[11px] font-sans text-[#392D35] max-w-xs">
+                        <p className="mt-1.5 text-[11px] font-sans text-[#392D35] max-w-xs leading-snug">
                           {isPositive
-                            ? '🔴 This habit is increasing their churn probability.'
-                            : '🟢 This habit helps protect customer retention.'}
+                            ? '🔴 This habit pushes their risk UP. Our retention strategy directly targets this.'
+                            : '🟢 This positive behavior helps DEFEND against churn.'}
                         </p>
                       </div>
                     )
@@ -763,22 +767,17 @@ export default function RetentionIntelligence() {
             </span>
           </div>
 
-          <p className="text-xs text-[#392D35] leading-relaxed">
-            Based on Customer #{customer_id}&apos;s behavioral breakdown, inactivity is predominantly driven by{' '}
-            <strong>{recommendations.primary_risk_driver}</strong>. Applying this targeted playbook counters their specific drop-off motivation before permanent defection occurs.
-          </p>
-
-          {/* Why Strategy is Applied Plain English Callout */}
-          <div className="rounded-2xl border-2 border-[#E6B95F] bg-white p-4 space-y-2">
+          {/* Simple Explanation & Why This Strategy Works */}
+          <div className="rounded-2xl border-2 border-[#E6B95F] bg-[#FFF8ED] p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-base">🎯</span>
+              <span className="text-base">💡</span>
               <h4 className="font-editorial text-sm font-bold text-[#8C6819]">
-                Why Was This Specific Strategy Applied? (In Plain Words)
+                Simple Explanation & Why This Strategy Works
               </h4>
             </div>
             <p className="text-xs text-[#291C2E] leading-relaxed">
               {recommendations.why_strategy || (
-                `Customer #${customer_id}'s primary warning sign is ${recommendations.primary_risk_driver.split('(')[0]}. Instead of generic discounts, this strategy directly counters their specific inactivity driver to turn them into a habitual repeat customer.`
+                `Customer #${customer_id}'s primary warning sign is ${recommendations.primary_risk_driver.split('(')[0]}. Instead of generic discounts that waste money, this targeted strategy focuses directly on what they need so they become a confident, habitual buyer.`
               )}
             </p>
           </div>
@@ -796,10 +795,10 @@ export default function RetentionIntelligence() {
                   Targeted Promotional Offer
                 </p>
                 <p className="font-bold text-xs text-[#B83838] mt-1">
-                  {recommendations.suggested_incentives.discount_offer}
+                  {String(recommendations.suggested_incentives?.discount_offer || '').replace(/\$/g, '₹')}
                 </p>
                 <span className="inline-block mt-1 rounded bg-[#FAECEC] px-2 py-0.5 text-[9px] font-bold text-[#B83838]">
-                  {recommendations.suggested_incentives.badge}
+                  {String(recommendations.suggested_incentives?.badge || '').replace(/\$/g, '₹')}
                 </span>
               </div>
 
@@ -808,7 +807,7 @@ export default function RetentionIntelligence() {
                   Loyalty & Relationship Benefit
                 </p>
                 <p className="font-bold text-xs text-[#2D5A27] mt-1">
-                  {recommendations.suggested_incentives.loyalty_benefit}
+                  {String(recommendations.suggested_incentives?.loyalty_benefit || '').replace(/\$/g, '₹')}
                 </p>
                 <span className="inline-block mt-1 rounded bg-[#EAF5E9] px-2 py-0.5 text-[9px] font-bold text-[#2D5A27]">
                   Retention Shield
@@ -836,10 +835,10 @@ export default function RetentionIntelligence() {
                   Annual Gross Revenue at Risk
                 </p>
                 <p className="font-mono text-2xl font-black text-[#B83838] mt-0.5">
-                  ₹{business_consequences.revenue_at_risk.toLocaleString()}
+                  ₹{Number(business_consequences.revenue_at_risk || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <p className="text-[10px] text-[#8C2A2A] mt-1">
-                  {business_consequences.cost_of_inaction}
+                  {String(business_consequences.cost_of_inaction || '').replace(/\$/g, '₹')}
                 </p>
               </div>
 
@@ -848,7 +847,7 @@ export default function RetentionIntelligence() {
                   Customer Lifetime Value (CLV)
                 </p>
                 <p className="font-mono text-xl font-bold text-[#291C2E] mt-0.5">
-                  ₹{business_consequences.estimated_clv.toLocaleString()}
+                  ₹{Number(business_consequences.estimated_clv || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <p className="text-[10px] text-[#A99BB9]">Projected over 36 months</p>
               </div>
@@ -859,11 +858,11 @@ export default function RetentionIntelligence() {
             <p className="text-[10px] text-[#392D35] flex items-center justify-between">
               <span>Max Recommended Concession:</span>
               <strong className="font-mono text-[#8C6819]">
-                {business_consequences.recommended_budget}
+                {String(business_consequences.recommended_budget || '').replace(/\$/g, '₹')}
               </strong>
             </p>
             <p className="text-[10px] text-[#2D5A27] font-semibold mt-1">
-              Projected ROI: {recommendations.suggested_incentives.projected_roi}
+              Projected ROI: {String(recommendations.suggested_incentives?.projected_roi || '').replace(/\$/g, '₹')}
             </p>
           </div>
         </Card>

@@ -183,6 +183,13 @@ export async function downloadUploadResults(uploadId) {
   return blob
 }
 
+// Delete a specific upload run from history.
+export function deleteUpload(uploadId) {
+  return request(`/uploads/${uploadId}`, {
+    method: 'DELETE',
+  })
+}
+
 export function getLatestPredictions() {
   return request('/predictions/latest')
 }

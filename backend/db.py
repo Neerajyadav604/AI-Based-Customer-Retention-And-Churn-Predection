@@ -585,3 +585,43 @@ def get_customer_by_id(customer_id, user_email=None):
         print("get_customer_by_id fallback:", type(e).__name__, e)
         return None
 
+def delete_upload(user_email, upload_id):
+    """
+    Safely delete an individual upload and its cascading child records
+    (upload_customers, orders, history) belonging strictly to the authenticated user.
+    """
+    try:
+        with DBContext() as db:
+            # 1. Validate existence and ownership
+            cursor = db.execute(
+                "SELECT id, user_email, file_name FROM uploads WHERE id = %s",
+                (upload_id,)
+            )
+            upload = cursor.fetchone()
+            if upload is None:
+                return {"success": False, "status_code": 404, "detail": "Upload record not found"}
+
+            upload_dict = dict(upload)
+            if upload_dict.get("user_email") != user_email:
+                return {"success": False, "status_code": 403, "detail": "You do not have permission to delete this upload"}
+
+            # 2. Delete child records across related tables
+            db.execute("DELETE FROM upload_customers WHERE upload_id = %s", (upload_id,))
+            db.execute("DELETE FROM orders WHERE upload_id = %s AND user_email = %s", (upload_id, user_email))
+            db.execute("DELETE FROM history WHERE upload_id = %s AND user_email = %s", (upload_id, user_email))
+
+            # 3. Delete parent upload record
+            db.execute("DELETE FROM uploads WHERE id = %s AND user_email = %s", (upload_id, user_email))
+
+            return {
+                "success": True,
+                "status_code": 200,
+                "detail": f"Upload #{upload_id} successfully deleted",
+                "id": upload_id,
+                "file_name": upload_dict.get("file_name"),
+            }
+    except Exception as e:
+        print("delete_upload error:", type(e).__name__, e)
+        return {"success": False, "status_code": 500, "detail": f"Database error during deletion: {str(e)}"}
+
+

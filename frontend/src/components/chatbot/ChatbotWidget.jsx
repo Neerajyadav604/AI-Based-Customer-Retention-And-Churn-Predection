@@ -70,7 +70,15 @@ export default function ChatbotWidget() {
       setIsLoading(true)
 
       try {
-        const res = await sendChatMessage(text.trim(), sessionId)
+        let res
+        try {
+          res = await sendChatMessage(text.trim(), sessionId)
+        } catch (initialErr) {
+          console.warn('[CHATBOT] First request attempt failed, retrying once...', initialErr)
+          await new Promise((r) => setTimeout(r, 400))
+          res = await sendChatMessage(text.trim(), sessionId)
+        }
+
         const botMsg = {
           role: 'assistant',
           content: res.reply || 'Analysis complete.',
