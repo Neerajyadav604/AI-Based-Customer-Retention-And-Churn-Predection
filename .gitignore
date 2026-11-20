@@ -7,5 +7,5 @@ dist/
 .env
 backend/data/
 backend/app.db
+# Local database files
 *.db
-.env.example
