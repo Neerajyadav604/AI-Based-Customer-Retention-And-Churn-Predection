@@ -315,11 +315,10 @@ export default function History() {
                     setStatusFilter(status)
                     setPage(1)
                   }}
-                  className={`rounded-lg px-3 py-1 font-medium transition ${
-                    isSelected
-                      ? 'bg-[#494269] text-[#FFF3E4] shadow-xs font-bold'
-                      : 'text-[#494269] hover:bg-[#EBC69F]/40'
-                  }`}
+                  className={`rounded-lg px-3 py-1 font-medium transition ${isSelected
+                    ? 'bg-[#494269] text-[#FFF3E4] shadow-xs font-bold'
+                    : 'text-[#494269] hover:bg-[#EBC69F]/40'
+                    }`}
                 >
                   {status} ({count})
                 </button>
@@ -423,13 +422,12 @@ export default function History() {
                       {/* Status */}
                       <td className="px-5 py-4 text-center">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                            status === 'Completed'
-                              ? 'bg-[#EAF5E9] text-[#2D5A27] border border-[#7EAA79]/50'
-                              : status === 'Failed'
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${status === 'Completed'
+                            ? 'bg-[#EAF5E9] text-[#2D5A27] border border-[#7EAA79]/50'
+                            : status === 'Failed'
                               ? 'bg-[#FAECEC] text-[#8C2A2A] border border-[#C87979]/50'
                               : 'bg-[#FAF2DF] text-[#8C6819] border border-[#E6B95F]/50'
-                          }`}
+                            }`}
                         >
                           <span
                             className="size-1.5 rounded-full"
@@ -438,8 +436,8 @@ export default function History() {
                                 status === 'Completed'
                                   ? '#43823C'
                                   : status === 'Failed'
-                                  ? '#B83838'
-                                  : '#E6B95F',
+                                    ? '#B83838'
+                                    : '#E6B95F',
                             }}
                           />
                           {status}
@@ -533,11 +531,10 @@ export default function History() {
                   </span>
                   {uploadDetail && (
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                        uploadDetail.status === 'Completed'
-                          ? 'bg-[#EAF5E9] text-[#2D5A27]'
-                          : 'bg-[#FAECEC] text-[#8C2A2A]'
-                      }`}
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${uploadDetail.status === 'Completed'
+                        ? 'bg-[#EAF5E9] text-[#2D5A27]'
+                        : 'bg-[#FAECEC] text-[#8C2A2A]'
+                        }`}
                     >
                       {uploadDetail.status}
                     </span>
